@@ -2,21 +2,28 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import "./index.css";
 import reportWebVitals from "./reportWebVitals";
-import { createBrowserRouter, RouterProvider } from "react-router-dom";
+import { createBrowserRouter, RouterProvider} from "react-router-dom";
+import * as LoginInfoContext from "./context";
 import Main from "./pages/Main";
+import Login from "./pages/Login";
 
-let a = true;
 const router = createBrowserRouter([
     {
         path: "/",
-        Component: Main,
+        element: <Main />,
+    },
+    {
+        path: "/login",
+        element: <Login />,
     },
 ]);
 
 const root = ReactDOM.createRoot(document.getElementById("root") as HTMLElement);
 root.render(
     <React.StrictMode>
-        <RouterProvider router={router} />
+        <LoginInfoContext.LoginProvider>
+            <RouterProvider router={router} />
+        </LoginInfoContext.LoginProvider>
     </React.StrictMode>
 );
 
