@@ -35,7 +35,7 @@ function LoginPage() {
                 onChange={handleChange}
             />
             <input
-                type="text"
+                type="password"
                 className="rounded-xl h-8 px-3 mb-3 focus:outline-none focus:ring focus:ring-gray-300"
                 name="pw"
                 placeholder="PW"
