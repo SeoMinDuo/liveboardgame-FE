@@ -6,7 +6,7 @@ import { createBrowserRouter, RouterProvider} from "react-router-dom";
 import * as LoginInfoContext from "./context";
 import Main from "./pages/MainPage";
 import Login from "./pages/LoginPage";
-
+import Game from "./pages/GamePage"
 const router = createBrowserRouter([
     {
         path: "/",
@@ -16,6 +16,10 @@ const router = createBrowserRouter([
         path: "/login",
         element: <Login />,
     },
+    {
+        path:"/game",
+        element:<Game/>
+    }
 ]);
 
 const root = ReactDOM.createRoot(document.getElementById("root") as HTMLElement);
