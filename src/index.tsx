@@ -2,11 +2,12 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import "./index.css";
 import reportWebVitals from "./reportWebVitals";
-import { createBrowserRouter, RouterProvider} from "react-router-dom";
+import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import * as LoginInfoContext from "./context";
 import Main from "./pages/MainPage";
 import Login from "./pages/LoginPage";
-import Game from "./pages/GamePage"
+import Game from "./pages/GamePage";
+
 const router = createBrowserRouter([
     {
         path: "/",
@@ -17,16 +18,16 @@ const router = createBrowserRouter([
         element: <Login />,
     },
     {
-        path:"/game",
-        element:<Game/>
-    }
+        path: "/game",
+        element: <Game />,
+    },
 ]);
 
 const root = ReactDOM.createRoot(document.getElementById("root") as HTMLElement);
 root.render(
     <React.StrictMode>
         <LoginInfoContext.LoginProvider>
-            <RouterProvider router={router} />
+            <RouterProvider router={router}  />
         </LoginInfoContext.LoginProvider>
     </React.StrictMode>
 );
