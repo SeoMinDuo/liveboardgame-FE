@@ -1,30 +1,67 @@
-import Stomp from 'stompjs';
-
-const WebSocketUrl = 'ws://localhost:8080/ws'; // WebSocket 서버 주소
-const StompClient = Stomp.client(WebSocketUrl);
-
-const connect = (): void => {
-  StompClient.connect({}, () => {
-    console.log('Connected to WebSocket');
-  });
-};
-
-const subscribe = (destination: string, callback: (message: any) => void): Stomp.Subscription => {
-  return StompClient.subscribe(destination, (message: Stomp.Message) => {
-    if (message.body) {
-      callback(JSON.parse(message.body));
+import Stomp from "stompjs";
+const WebSocketUrl = "ws://localhost:8080/ws"; // Spring 서버의 WebSocket 주소로 변경해주세요.
+class StompService {
+    private stompClient: Stomp.Client | null = null;
+    private stompSubscription!: Stomp.Subscription | null;
+    public connect(): Promise<void> {
+        this.stompClient = Stomp.over(new WebSocket(WebSocketUrl));
+        return new Promise((resolve, reject) => {
+            this.stompClient?.connect(
+                {},
+                () => {
+                    console.log("Websocket 연결 성공");
+                    resolve();
+                },
+                (error) => {
+                    console.log("Websocket 연결 실패");
+                    reject(error);
+                }
+            );
+        });
     }
-  });
-};
+    public isConnected() {
+        return this.stompClient?.connected || false;
+    }
+    public subscribe(destination: string, callback: (message: Stomp.Message) => void) {
+        if (this.isConnected()) {
+            console.log("WebSocket 구독을 시도합니다."); // 연결되지 않았을 때 처리
+            // 추가: WebSocket 연결 상태 확인
+            if (this.stompClient) {
+                return (this.stompSubscription = this.stompClient.subscribe(destination, (message: Stomp.Message) => {
+                    if (message.body) {
+                        callback(JSON.parse(message.body));
+                    }
+                }));
+            }
+        } else {
+            console.log("[구독 실패]WebSocket 연결이 필요합니다."); // 연결되지 않았을 때 처리
+        }
+    }
+    public unsubscribe(): void {
+        this.stompSubscription?.unsubscribe();
+        this.stompSubscription = null;
+    }
 
-const send = (destination: string, data: any): void => {
-  StompClient.send(destination, {}, JSON.stringify(data));
-};
+    public isSubscribed() {
+        if (this.stompSubscription) return true;
+        else return false;
+    }
 
-const disconnect = (): void => {
-  StompClient.disconnect(() => {
-    console.log('Disconnected from WebSocket');
-  });
-};
+    public send(destination: string, data: any) {
+        if (this.stompClient && this.isConnected()) {
+            // 추가: 현재 연결 상태를 확인
+            this.stompClient.send(destination, {}, JSON.stringify(data));
+        }
+    }
 
-export { connect, subscribe, send, disconnect };
+    public disconnect() {
+        if (this.stompClient && this.isConnected()) {
+            this.stompClient.disconnect(() => {
+                console.log("WebSocket 연결이 해제되었습니다.");
+            });
+            this.stompClient = null;
+        }
+    }
+}
+
+export default StompService;

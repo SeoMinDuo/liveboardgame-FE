@@ -1,7 +1,9 @@
 import { useNavigate } from "react-router-dom";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { useLoginContext } from "../context";
-import { connect, subscribe, send, disconnect } from "../stomp";
+import StompService from "../stomp";
+
+const stomp = new StompService();
 function GamePage() {
     const [messages, setMessages] = useState<any[]>([]);
     const [inputMessage, setInputMessage] = useState<string>("");
@@ -15,9 +17,19 @@ function GamePage() {
 
     const handleSendMessage = (): void => {
         if (inputMessage.trim() !== "") {
-            send("/app/sendMessage", { text: inputMessage });
+            stomp.send("/app/sendMessage", { text: inputMessage });
             setInputMessage("");
         }
+    };
+    const checkSubscribe = (): void => {
+        if (stomp.isSubscribed()) {
+            alert("구독중");
+        } else {
+            alert("구독중 아님");
+        }
+    };
+    const handleNewMessage = (newMessage: string) => {
+        setMessages((prevMessages) => [...prevMessages, newMessage]);
     };
 
     useEffect(() => {
@@ -26,15 +38,25 @@ function GamePage() {
         }
     }, [login, navigate]);
     useEffect(() => {
-        connect(); // 컴포넌트 마운트 시 WebSocket 연결
-
-        const subscription = subscribe("/topic/messages", (newMessage: any) => {
-            setMessages((prevMessages) => [...prevMessages, newMessage]);
-        });
-
+        const setupStomp = async () => {
+            try {
+                await stomp.connect(); // WebSocket 연결 완료 대기
+                stomp.subscribe("/topic/messages", (newMessage: any) => {
+                    handleNewMessage(newMessage.content); // 새 메시지를 받았을 때 처리
+                });
+            } catch (error) {
+                console.error("WebSocket 연결 실패:", error);
+            }
+        };
+        if (localStorage.getItem("isConnected") == null || localStorage.getItem("isConnected") === "false") {
+            localStorage.setItem("isConnected", "true");
+            setupStomp();
+        }
+        setupStomp();
         return () => {
-            subscription.unsubscribe(); // 컴포넌트 언마운트 시 구독 해제
-            disconnect(); // 컴포넌트 언마운트 시 WebSocket 연결 해제
+            localStorage.setItem("isConnected", "false");
+            stomp.unsubscribe(); // 컴포넌트 언마운트 시 구독 해제
+            stomp.disconnect(); // 컴포넌트 언마운트 시 WebSocket 연결 해제
         };
     }, []);
 
@@ -47,12 +69,15 @@ function GamePage() {
                         <div>
                             <ul>
                                 {messages.map((message, index) => (
-                                    <li key={index}>{message.text}</li>
+                                    <li key={index}>{message}</li>
                                 ))}
                             </ul>
                             <div>
                                 <input type="text" value={inputMessage} onChange={handleInputChange} />
                                 <button onClick={handleSendMessage}>Send</button>
+                                <button onClick={checkSubscribe} className="ml-5">
+                                    구독체크
+                                </button>
                             </div>
                         </div>
                     </div>
