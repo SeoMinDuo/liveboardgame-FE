@@ -2,11 +2,13 @@ import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { useLoginContext } from "../context";
 import StompService from "../stomp";
+import axios from "axios";
 
 const stomp = new StompService();
 function GamePage() {
   const [messages, setMessages] = useState<any[]>([]);
   const [inputMessage, setInputMessage] = useState<string>("");
+  const [matchingState, setMatchingState] = useState(true);
 
   const login = useLoginContext();
   const navigate = useNavigate();
@@ -33,10 +35,10 @@ function GamePage() {
   const handleNewMessage = (newMessage: string) => {
     setMessages((prevMessages) => [...prevMessages, newMessage]);
   };
-  const setupStomp = async () => {
+  const setupStomp = async (roomId: string) => {
     try {
       await stomp.connect(); // WebSocket 연결 완료 대기
-      stomp.subscribe("/topic/messages", (newMessage: any) => {
+      stomp.subscribe("/topic/" + roomId, (newMessage: any) => {
         handleNewMessage(newMessage.content); // 새 메시지를 받았을 때 처리
       });
       if (
@@ -49,14 +51,37 @@ function GamePage() {
       console.error("WebSocket 연결 실패:", error);
     }
   };
+  const getRoomId = async (): Promise<string> => {
+    try {
+      const res = await axios.get("http://localhost:8080/roomId", {
+        params: { XXXID: "123" },
+      });
+      const roomId: string = res.data.roomId;
+
+      return roomId;
+    } catch (err) {
+      console.log("현재 방이 없습니다. 5초 뒤 다시 시도합니다.");
+
+      await new Promise((resolve) => setTimeout(resolve, 5000));
+      return getRoomId(); // 재귀 호출로 다시 함수를 실행합니다.
+    }
+  };
+
+  const setMatch = async () => {
+    let roomId = await getRoomId();
+    await setupStomp(roomId);
+    setMatchingState(false); // 매칭 완료
+  };
 
   useEffect(() => {
     if (!login.loginInfo.isLogin) {
       navigate("/login");
     }
   }, [login, navigate]);
+
   useEffect(() => {
-    setupStomp();
+    setMatch();
+
     return () => {
       localStorage.setItem("isConnected", "false");
       stomp.unsubscribe(); // 컴포넌트 언마운트 시 구독 해제
@@ -70,6 +95,7 @@ function GamePage() {
         <div className="bg-myWhite h-screen flex justify-center items-center flex-col">
           <div>
             <h1>STOMP WebSocket Example</h1>
+            {matchingState ? <div>매칭중</div> : <div>매칭완료</div>}
             <div>
               <ul>
                 {messages.map((message, index) => (
