@@ -76,7 +76,7 @@ function GamePage() {
                                 <input type="text" value={inputMessage} onChange={handleInputChange} />
                                 <button onClick={handleSendMessage}>Send</button>
                                 <button onClick={checkSubscribe} className="ml-5">
-                                    구독체크
+                                    구독 체크
                                 </button>
                             </div>
                         </div>
