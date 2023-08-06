@@ -77,7 +77,11 @@ function GamePage() {
     }, [login, navigate]);
 
     useEffect(() => {
-        setMatch();
+        if (!login.loginInfo.isLogin) {
+            navigate("/login");
+        } else {
+            setMatch();
+        }
 
         return () => {
             localStorage.setItem("isConnected", "false");
