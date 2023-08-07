@@ -1,6 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { useEffect, useState, useRef } from "react";
 import { useLoginContext } from "../context";
+import LoadingCircle from "../components/LoadingCircle";
 import StompService from "../stomp";
 import axios from "axios";
 
@@ -9,6 +10,8 @@ function GamePage() {
   const [messages, setMessages] = useState<any[]>([]);
   const [inputMessage, setInputMessage] = useState<string>("");
   const [isMatchingState, setIsMatchingState] = useState(true);
+  const [isGameStarted, setIsGameStarted] = useState(false);
+
   let stopFinding = useRef(false);
   const login = useLoginContext();
   const navigate = useNavigate();
@@ -48,6 +51,7 @@ function GamePage() {
       await stomp.connect(); // WebSocket 연결 완료 대기
       stomp.subscribe("/topic/" + roomId, (newMessage: any) => {
         handleNewMessage(newMessage.content); // 새 메시지를 받았을 때 처리
+        if (newMessage.gameServer === "start") setIsGameStarted(true);
       });
       if (
         localStorage.getItem("isConnected") == null ||
@@ -106,34 +110,60 @@ function GamePage() {
   }, [login, navigate]);
 
   return (
-    <div>
+    <div className="bg-myWhite h-screen flex justify-center items-center">
       {login.loginInfo.isLogin ? (
-        <div className="bg-myWhite h-screen flex justify-center items-center flex-col">
+        isGameStarted ? (
+          <div className="flex flex-col">
+            게임이 시작되었습니다.
+            <button
+              onClick={() => setIsGameStarted(false)}
+              className="p-1 border border-gray-400"
+            >
+              강제 게임 종료 버튼
+            </button>
+          </div>
+        ) : (
           <div>
             <h1>STOMP WebSocket Example</h1>
-            {isMatchingState ? <div>매칭중</div> : <div>매칭완료</div>}
+            {isMatchingState ? (
+              <div>
+                <LoadingCircle />
+                <span>매칭중</span>
+              </div>
+            ) : (
+              <div>매칭완료</div>
+            )}
             <div>
               <ul>
                 {messages.map((message, index) => (
                   <li key={index}>{message}</li>
                 ))}
               </ul>
-              <div>
+              <div className="flex flex-col">
                 <input
                   type="text"
                   value={inputMessage}
                   onChange={handleInputChange}
                 />
                 <button onClick={handleSendMessage}>Send</button>
-                <button onClick={checkSubscribe} className="ml-5">
-                  구독 체크
+                <button
+                  onClick={checkSubscribe}
+                  className="p-1 border border-gray-400"
+                >
+                  테스트 용 구독 체크
+                </button>
+                <button
+                  onClick={() => setIsGameStarted(true)}
+                  className="p-1 border border-gray-400"
+                >
+                  강제 게임 시작 버튼
                 </button>
               </div>
             </div>
           </div>
-        </div>
+        )
       ) : (
-        <div></div>
+        <div>로그인을 다시 시도해주세요.</div>
       )}
     </div>
   );
