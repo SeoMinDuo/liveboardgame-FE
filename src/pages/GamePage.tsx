@@ -80,6 +80,7 @@ function GamePage() {
     }
   };
 
+  // roomId를 받고나서 해당 roomId로 연결하는 비동기 처리하는 함수
   const setMatch = async () => {
     let roomId = await getRoomId().catch((err) => {
       console.log(err);
@@ -87,26 +88,22 @@ function GamePage() {
     if (roomId) await setupStomp(roomId);
   };
 
+  // 로그인 여부 확인 후 stomp연결 하는 과정
   useEffect(() => {
     if (!login.loginInfo.isLogin) {
       navigate("/login");
+      return; // 조건이 충족되면 navigate 실행 후 더 이상 진행하지 않음
     }
-  }, [login, navigate]);
 
-  useEffect(() => {
-    if (!login.loginInfo.isLogin) {
-      navigate("/login");
-    } else {
-      setMatch();
-    }
+    setMatch(); // login이 true인 경우만 실행
 
     return () => {
       localStorage.setItem("isConnected", "false");
-      stomp.unsubscribe(); // 컴포넌트 언마운트 시 구독 해제
-      stomp.disconnect(); // 컴포넌트 언마운트 시 WebSocket 연결 해제
+      stomp.unsubscribe();
+      stomp.disconnect();
       stopFinding.current = true;
     };
-  }, []);
+  }, [login, navigate]);
 
   return (
     <div>
