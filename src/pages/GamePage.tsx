@@ -2,6 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { useEffect, useState, useRef } from "react";
 import { useLoginContext } from "../context";
 import LoadingCircle from "../components/LoadingCircle";
+import GameBoard from "../components/GameBoard";
 import StompService from "../stomp";
 import axios from "axios";
 
@@ -114,6 +115,7 @@ function GamePage() {
       {login.loginInfo.isLogin ? (
         isGameStarted ? (
           <div className="flex flex-col">
+            <GameBoard />
             게임이 시작되었습니다.
             <button
               onClick={() => setIsGameStarted(false)}
