@@ -17,6 +17,19 @@ function GamePage() {
   const login = useLoginContext();
   const navigate = useNavigate();
 
+  // GameBoard
+  const initialBoardData: string[][] = Array.from({ length: 9 }, () =>
+    Array.from({ length: 9 }, () => "")
+  );
+
+  const [boardData, setBoardData] = useState<string[][]>(initialBoardData);
+
+  const handleCellClick = (x: number, y: number) => {
+    const newBoardData = [...boardData];
+    newBoardData[y][x] = "X"; // 예시로 X 말 추가
+    setBoardData(newBoardData);
+  };
+
   // input으로 메세지가 들어오면 inputMessage 수정
   const handleInputChange = (
     event: React.ChangeEvent<HTMLInputElement>
@@ -99,6 +112,7 @@ function GamePage() {
     console.log("Component unmounted : getRoomId() 중지"); // stopFinding이 true인 경우
   };
 
+  // roomId를 받아와서 해당 roomId로 소켓 세팅 하는 함수
   const setMatch = async () => {
     const roomId = await getRoomId().catch(console.log);
     if (roomId) {
@@ -127,7 +141,7 @@ function GamePage() {
       {login.loginInfo.isLogin ? (
         isGameStarted ? (
           <div className="flex flex-col">
-            <GameBoard />
+            <GameBoard data={boardData} onCellClick={handleCellClick} />
             게임이 시작되었습니다.
             <button
               onClick={() => setIsGameStarted(false)}

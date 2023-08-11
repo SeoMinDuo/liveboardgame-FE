@@ -1,7 +1,27 @@
-function GameBoard() {
-    
-  return <div>
+import React from "react";
+import BoardCell from "./BoardCell";
 
-  </div>;
+interface GameBoardProps {
+  data: string[][];
+  onCellClick: (x: number, y: number) => void;
 }
+
+const GameBoard: React.FC<GameBoardProps> = ({ data, onCellClick }) => {
+  return (
+    <div className="">
+      {data.map((row, y) => (
+        <div className="row flex" key={y}>
+          {row.map((cell, x) => (
+            <BoardCell
+              key={x}
+              player={cell}
+              onClick={() => onCellClick(x, y)}
+            />
+          ))}
+        </div>
+      ))}
+    </div>
+  );
+};
+
 export default GameBoard;
