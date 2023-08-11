@@ -8,152 +8,179 @@ import axios from "axios";
 
 const stomp = new StompService();
 function GamePage() {
-    const [messages, setMessages] = useState<any[]>([]);
-    const [inputMessage, setInputMessage] = useState<string>("");
-    const [isMatchingState, setIsMatchingState] = useState(true);
-    const [isGameStarted, setIsGameStarted] = useState(false);
+  const [messages, setMessages] = useState<any[]>([]);
+  const [inputMessage, setInputMessage] = useState<string>("");
+  const [isMatchingState, setIsMatchingState] = useState(true);
+  const [isGameStarted, setIsGameStarted] = useState(false);
 
-    let stopFinding = useRef(false);
-    const login = useLoginContext();
-    const navigate = useNavigate();
+  let stopFinding = useRef(false);
+  const login = useLoginContext();
+  const navigate = useNavigate();
 
-    // input으로 메세지가 들어오면 inputMessage 수정
-    const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>): void => {
-        setInputMessage(event.target.value);
-    };
+  // input으로 메세지가 들어오면 inputMessage 수정
+  const handleInputChange = (
+    event: React.ChangeEvent<HTMLInputElement>
+  ): void => {
+    setInputMessage(event.target.value);
+  };
 
-    // 서버로 input의 메세지 전송
-    const handleSendMessage = (): void => {
-        if (inputMessage.trim() !== "") {
-            stomp.send("/app/sendMessage", { text: inputMessage });
-            setInputMessage("");
-        }
-    };
+  // 서버로 input의 메세지 전송
+  const handleSendMessage = (): void => {
+    if (inputMessage.trim() !== "") {
+      stomp.send("/app/sendMessage", { text: inputMessage });
+      setInputMessage("");
+    }
+  };
 
-    // stomp 메세지 수신 구독 중인지 확인하는 함수
-    const checkSubscribe = (): void => {
-        if (stomp.isSubscribed()) {
-            alert("구독중");
-        } else {
-            alert("구독중 아님");
-        }
-    };
+  // stomp 메세지 수신 구독 중인지 확인하는 함수
+  const checkSubscribe = (): void => {
+    if (stomp.isSubscribed()) {
+      alert("구독중");
+    } else {
+      alert("구독중 아님");
+    }
+  };
 
-    // 메세지가 들어오면 이전에 받았던 메세지와 합치는 함수
-    const handleNewMessage = (newMessage: string) => {
-        setMessages((prevMessages) => [...prevMessages, newMessage]);
-    };
+  // 메세지가 들어오면 이전에 받았던 메세지와 합치는 함수
+  const handleNewMessage = (newMessage: string) => {
+    setMessages((prevMessages) => [...prevMessages, newMessage]);
+  };
 
-    // stomp 연결, stomp 메세지 수신 구독
-    const setupStomp = async (roomId: string) => {
-        try {
-            await stomp.connect(roomId, "/topic/" + roomId, (newMessage: any) => {
-                handleNewMessage(newMessage.content); // 새 메시지를 받았을 때 처리
-                if (newMessage.content === "start") setIsGameStarted(true);
-            });
-            // WebSocket 연결 완료 대기
-            // stomp.subscribe("/topic/" + roomId, (newMessage: any) => {
-            //     handleNewMessage(newMessage.content); // 새 메시지를 받았을 때 처리
-            //     if (newMessage.gameServer === "start") setIsGameStarted(true);
-            // });
-            stomp.send("/app/enterRoom/" + roomId, { name: "user1" });
-            if (localStorage.getItem("isConnected") == null || localStorage.getItem("isConnected") === "false") {
-                localStorage.setItem("isConnected", "true");
-            }
-            setIsMatchingState(false); // 매칭 완료
-        } catch (error) {
-            console.error("WebSocket 연결 실패:", error);
-        }
-    };
+  // stomp 연결, stomp 메세지 수신 구독
+  const setupStomp = async (roomId: string) => {
+    try {
+      // 소켓 연결
+      await stomp.connect();
 
-    // stomp 연결 전 게임 연결할 roomId 가져오는 함수
-    const getRoomId = async (): Promise<string> => {
-        try {
-            const res = await axios.get("http://localhost:8080/roomId", {
-                params: { XXXID: "123" },
-            });
-            const roomId: string = res.data.roomId;
+      // 새로운 말 배치 수신 구독
+      stomp.subscribe("/app/gameboard/" + roomId, (newMessage: any) => {
+        handleNewMessage(newMessage.content); // 새 메시지를 받았을 때 처리
+        if (newMessage.content === "start") setIsGameStarted(true);
+      });
 
-            return roomId;
-        } catch (err) {
-            console.log("현재 방이 없습니다. 5초 뒤 다시 시도합니다.");
+      // 게임 시간 카운트 수신 구독
+      stomp.subscribe("topic/gameboard/" + roomId, (newMessage: any) => {
+        handleNewMessage(newMessage.content); // 새 메시지를 받았을 때 처리
+        if (newMessage.content === "start") setIsGameStarted(true);
+      });
 
-            await new Promise((resolve) => setTimeout(resolve, 5000));
-            return !stopFinding.current ? getRoomId() : Promise.reject("Component umounted"); // 재귀 호출로 다시 함수를 실행합니다.
-        }
-    };
+      // 게임 시작 신호 수신 구독
+      stomp.subscribe("topic/" + roomId, (newMessage: any) => {
+        handleNewMessage(newMessage.content); // 새 메시지를 받았을 때 처리
+        if (newMessage.content === "start") setIsGameStarted(true);
+      });
 
-    // roomId를 받고나서 해당 roomId로 연결하는 비동기 처리하는 함수
-    const setMatch = async () => {
-        let roomId = await getRoomId().catch((err) => {
-            console.log(err);
+      // 게임 시작시 필요한 추가 정보 송신
+      stomp.send("/app/enterRoom/" + roomId, { name: "user1" });
+
+      // 매칭 완료
+      setIsMatchingState(false);
+    } catch (error) {
+      console.error("WebSocket 연결 실패:", error);
+    }
+  };
+
+  // stomp 연결 전 게임 연결할 roomId 가져오는 함수
+  const wait = (ms: number) =>
+    new Promise((resolve) => setTimeout(resolve, ms));
+
+  const getRoomId = async () => {
+    while (!stopFinding.current) {
+      try {
+        const res = await axios.get("http://localhost:8080/roomId", {
+          params: { XXXID: "123" },
         });
-        if (roomId) await setupStomp(roomId);
+        return res.data.roomId;
+      } catch (err) {
+        console.log("현재 방이 없습니다. 5초 뒤 다시 시도합니다.");
+        await wait(5000);
+      }
+    }
+    console.log("Component unmounted : getRoomId() 중지"); // stopFinding이 true인 경우
+  };
+
+  const setMatch = async () => {
+    const roomId = await getRoomId().catch(console.log);
+    if (roomId) {
+      await setupStomp(roomId);
+    }
+  };
+
+  // 로그인 여부 확인 후 stomp연결 하는 과정
+  useEffect(() => {
+    if (!login.loginInfo.isLogin) {
+      navigate("/login");
+      return; // 조건이 충족되면 navigate 실행 후 더 이상 진행하지 않음
+    }
+
+    setMatch(); // login이 true인 경우만 실행
+
+    return () => {
+      stomp.unsubscribe();
+      stomp.disconnect();
+      stopFinding.current = true;
     };
+  }, [login, navigate]);
 
-    // 로그인 여부 확인 후 stomp연결 하는 과정
-    useEffect(() => {
-        if (!login.loginInfo.isLogin) {
-            navigate("/login");
-            return; // 조건이 충족되면 navigate 실행 후 더 이상 진행하지 않음
-        }
-
-        setMatch(); // login이 true인 경우만 실행
-
-        return () => {
-            localStorage.setItem("isConnected", "false");
-            stomp.unsubscribe();
-            stomp.disconnect();
-            stopFinding.current = true;
-        };
-    }, [login, navigate]);
-
-    return (
-        <div className="bg-myWhite h-screen flex justify-center items-center">
-            {login.loginInfo.isLogin ? (
-                isGameStarted ? (
-                    <div className="flex flex-col">
-                        <GameBoard />
-                        게임이 시작되었습니다.
-                        <button onClick={() => setIsGameStarted(false)} className="p-1 border border-gray-400">
-                            강제 게임 종료 버튼
-                        </button>
-                    </div>
-                ) : (
-                    <div>
-                        <h1>STOMP WebSocket Example</h1>
-                        {isMatchingState ? (
-                            <div>
-                                <LoadingCircle />
-                                <span>매칭중</span>
-                            </div>
-                        ) : (
-                            <div>매칭완료</div>
-                        )}
-                        <div>
-                            <ul>
-                                {messages.map((message, index) => (
-                                    <li key={index}>{message}</li>
-                                ))}
-                            </ul>
-                            <div className="flex flex-col">
-                                <input type="text" value={inputMessage} onChange={handleInputChange} />
-                                <button onClick={handleSendMessage}>Send</button>
-                                <button onClick={checkSubscribe} className="p-1 border border-gray-400">
-                                    테스트 용 구독 체크
-                                </button>
-                                <button onClick={() => setIsGameStarted(true)} className="p-1 border border-gray-400">
-                                    강제 게임 시작 버튼
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                )
+  return (
+    <div className="bg-myWhite h-screen flex justify-center items-center">
+      {login.loginInfo.isLogin ? (
+        isGameStarted ? (
+          <div className="flex flex-col">
+            <GameBoard />
+            게임이 시작되었습니다.
+            <button
+              onClick={() => setIsGameStarted(false)}
+              className="p-1 border border-gray-400"
+            >
+              강제 게임 종료 버튼
+            </button>
+          </div>
+        ) : (
+          <div>
+            <h1>STOMP WebSocket Example</h1>
+            {isMatchingState ? (
+              <div>
+                <LoadingCircle />
+                <span>매칭중</span>
+              </div>
             ) : (
-                <div>로그인을 다시 시도해주세요.</div>
+              <div>매칭완료</div>
             )}
-        </div>
-    );
+            <div>
+              <ul>
+                {messages.map((message, index) => (
+                  <li key={index}>{message}</li>
+                ))}
+              </ul>
+              <div className="flex flex-col">
+                <input
+                  type="text"
+                  value={inputMessage}
+                  onChange={handleInputChange}
+                />
+                <button onClick={handleSendMessage}>Send</button>
+                <button
+                  onClick={checkSubscribe}
+                  className="p-1 border border-gray-400"
+                >
+                  테스트 용 구독 체크
+                </button>
+                <button
+                  onClick={() => setIsGameStarted(true)}
+                  className="p-1 border border-gray-400"
+                >
+                  강제 게임 시작 버튼
+                </button>
+              </div>
+            </div>
+          </div>
+        )
+      ) : (
+        <div>로그인을 다시 시도해주세요.</div>
+      )}
+    </div>
+  );
 }
 
 export default GamePage;
