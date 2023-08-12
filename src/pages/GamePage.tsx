@@ -47,7 +47,7 @@ function GamePage() {
     // stomp 연결, stomp 메세지 수신 구독
     const setupStomp = async (roomId: string) => {
         try {
-            await stomp.connect("/topic/" + roomId, (newMessage: any) => {
+            await stomp.connect(roomId, "/topic/" + roomId, (newMessage: any) => {
                 handleNewMessage(newMessage.gameServer); // 새 메시지를 받았을 때 처리
                 if (newMessage.gameServer === "start") setIsGameStarted(true);
             });
@@ -56,8 +56,8 @@ function GamePage() {
             //     handleNewMessage(newMessage.content); // 새 메시지를 받았을 때 처리
             //     if (newMessage.gameServer === "start") setIsGameStarted(true);
             // });
-            console.log("이거 떠야함")
-            stomp.send("/app/enterRoom/" + roomId, { name: "user1" });
+            // console.log("이거 떠야함");
+            // stomp.send("/app/enterRoom/" + roomId, { name: "user1" });
             if (localStorage.getItem("isConnected") == null || localStorage.getItem("isConnected") === "false") {
                 localStorage.setItem("isConnected", "true");
             }
