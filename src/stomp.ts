@@ -23,10 +23,7 @@ class StompService {
                             }
                         });
                     }
-                    resolve(() => {
-                        console.log("이거 떠야함1");
-                        this.stompClient?.send("/app/enterRoom/" + roomId, { name: "user1" });
-                    });
+                    resolve(() => {});
                 },
                 (error) => {
                     console.log("Websocket 연결 실패");
