@@ -10,6 +10,7 @@ function LoginPage() {
   const [loginInfo, setLoginInfo] = useState<LoginInfo>({ id: "", pw: "" });
   const navigate = useNavigate();
   const login = useLoginContext();
+
   const handleChange = (e: ChangeEvent<HTMLInputElement>): void => {
     const { name, value } = e.target;
     setLoginInfo((prev) => ({
@@ -17,12 +18,14 @@ function LoginPage() {
       [name]: value,
     }));
   };
+
   const goMain = async () => {
     //axios
     //if check ok
     login.updateLoginInfo(loginInfo.id);
     navigate("/");
   };
+  
   return (
     <div className="bg-myWhite h-screen flex justify-center items-center flex-col">
       <div className="text-gray-900 text-[10vw] font-bold mb-5">
