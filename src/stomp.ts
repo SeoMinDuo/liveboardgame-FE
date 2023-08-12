@@ -9,7 +9,7 @@ class StompService {
         callback: (message: Stomp.Message) => void
     ): Promise<void> {
         this.stompClient = Stomp.over(new WebSocket(WebSocketUrl));
-        await new Promise((resolve, reject) => {
+        return await new Promise((resolve, reject) => {
             this.stompClient?.connect(
                 {},
                 () => {
@@ -23,7 +23,7 @@ class StompService {
                             }
                         });
                     }
-                    resolve("WebSocket 구동성공");
+                    resolve();
                 },
                 (error) => {
                     console.log("Websocket 연결 실패");
