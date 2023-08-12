@@ -12,7 +12,9 @@ function GamePage() {
   const [inputMessage, setInputMessage] = useState<string>("");
   const [isMatchingState, setIsMatchingState] = useState(true);
   const [isGameStarted, setIsGameStarted] = useState(false);
+  const [time, setTime] = useState(0);
 
+  let roomId = useRef("-1");
   let stopFinding = useRef(false);
   const login = useLoginContext();
   const navigate = useNavigate();
@@ -26,7 +28,14 @@ function GamePage() {
 
   const handleCellClick = (x: number, y: number) => {
     const newBoardData = [...boardData];
-    newBoardData[y][x] = "X"; // 예시로 X 말 추가
+    newBoardData[y][x] = "ME"; // 예시로 X 말 추가
+    stomp.send("/app/gameboard/" + roomId.current, { x, y, name: "XXXID" });
+    setBoardData(newBoardData);
+  };
+  const updateBoard = (x: number, y: number, own: string) => {
+    if (own === "XXXID") return;
+    const newBoardData = [...boardData];
+    newBoardData[y][x] = "own";
     setBoardData(newBoardData);
   };
 
@@ -60,31 +69,32 @@ function GamePage() {
   };
 
   // stomp 연결, stomp 메세지 수신 구독
-  const setupStomp = async (roomId: string) => {
+  const setupStomp = async () => {
     try {
       // 소켓 연결
       await stomp.connect();
 
       // 새로운 말 배치 수신 구독
-      stomp.subscribe("/app/gameboard/" + roomId, (newMessage: any) => {
-        handleNewMessage(newMessage.content); // 새 메시지를 받았을 때 처리
-        if (newMessage.content === "start") setIsGameStarted(true);
+      stomp.subscribe("/app/gameboard/" + roomId.current, (newMessage: any) => {
+        updateBoard(newMessage.x, newMessage.y, newMessage.name);
       });
 
       // 게임 시간 카운트 수신 구독
-      stomp.subscribe("topic/gameboard/" + roomId, (newMessage: any) => {
-        handleNewMessage(newMessage.content); // 새 메시지를 받았을 때 처리
-        if (newMessage.content === "start") setIsGameStarted(true);
-      });
+      stomp.subscribe(
+        "topic/gameboard/" + roomId.current,
+        (newMessage: any) => {
+          setTime(newMessage.time);
+        }
+      );
 
       // 게임 시작 신호 수신 구독
-      stomp.subscribe("topic/" + roomId, (newMessage: any) => {
+      stomp.subscribe("topic/" + roomId.current, (newMessage: any) => {
         handleNewMessage(newMessage.content); // 새 메시지를 받았을 때 처리
         if (newMessage.content === "start") setIsGameStarted(true);
       });
 
       // 게임 시작시 필요한 추가 정보 송신
-      stomp.send("/app/enterRoom/" + roomId, { name: "user1" });
+      stomp.send("/app/enterRoom/" + roomId.current, { name: "user1" });
 
       // 매칭 완료
       setIsMatchingState(false);
@@ -103,7 +113,8 @@ function GamePage() {
         const res = await axios.get("http://localhost:8080/roomId", {
           params: { XXXID: "123" },
         });
-        return res.data.roomId;
+        roomId.current = res.data.roomId;
+        return;
       } catch (err) {
         console.log("현재 방이 없습니다. 5초 뒤 다시 시도합니다.");
         await wait(5000);
@@ -114,9 +125,9 @@ function GamePage() {
 
   // roomId를 받아와서 해당 roomId로 소켓 세팅 하는 함수
   const setMatch = async () => {
-    const roomId = await getRoomId().catch(console.log);
-    if (roomId) {
-      await setupStomp(roomId);
+    await getRoomId().catch(console.log);
+    if (roomId.current != "-1") {
+      await setupStomp();
     }
   };
 
@@ -141,6 +152,7 @@ function GamePage() {
       {login.loginInfo.isLogin ? (
         isGameStarted ? (
           <div className="flex flex-col">
+            <div>{time}</div>
             <GameBoard data={boardData} onCellClick={handleCellClick} />
             게임이 시작되었습니다.
             <button
