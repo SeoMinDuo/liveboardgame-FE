@@ -64,7 +64,7 @@ class StompService {
             // 추가: 현재 연결 상태를 확인
             this.stompClient.send(destination, {}, JSON.stringify(data));
         } else {
-            console.log("send err");
+            console.log("WebSocket send() 실패");
         }
     }
 
