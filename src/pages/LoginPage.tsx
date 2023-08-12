@@ -25,10 +25,12 @@ function LoginPage() {
     };
     return (
         <div className="bg-myWhite h-screen flex justify-center items-center flex-col">
-            <div className="text-gray-900 text-[10vw] font-bold mb-5">뭉쳐야 산다</div>
+            <div className="text-gray-900 text-[10vw] font-bold mb-5">
+                뭉쳐야 산다
+            </div>
             <input
                 type="text"
-                className="rounded-xl h-8 px-3 mb-3 focus:outline-none focus:ring focus:ring-gray-300"
+                className="rounded-xl h-8 px-3 mb-3 focus:outline-none focus:ring focus:ring-gray-300 hover:ring hover:ring-gray-200"
                 name="id"
                 placeholder="ID"
                 value={loginInfo.id}
@@ -36,7 +38,7 @@ function LoginPage() {
             />
             <input
                 type="password"
-                className="rounded-xl h-8 px-3 mb-3 focus:outline-none focus:ring focus:ring-gray-300"
+                className="rounded-xl h-8 px-3 mb-3 focus:outline-none focus:ring focus:ring-gray-300 hover:ring hover:ring-gray-200"
                 name="pw"
                 placeholder="PW"
                 value={loginInfo.pw}
