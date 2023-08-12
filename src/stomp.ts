@@ -23,7 +23,7 @@ class StompService {
                             }
                         });
                     }
-                    resolve(() => {});
+                    resolve("WebSocket 구동성공");
                 },
                 (error) => {
                     console.log("Websocket 연결 실패");
