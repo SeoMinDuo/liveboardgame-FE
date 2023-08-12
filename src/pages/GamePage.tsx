@@ -53,6 +53,7 @@ function GamePage() {
                     if (newMessage.gameServer === "start") setIsGameStarted(true);
                 })
                 .then(() => {
+                    console.log("이거 떠야함")
                     stomp.send("/app/enterRoom/" + roomId, { name: "user1" });
                 }); // WebSocket 연결 완료 대기
             // stomp.subscribe("/topic/" + roomId, (newMessage: any) => {
