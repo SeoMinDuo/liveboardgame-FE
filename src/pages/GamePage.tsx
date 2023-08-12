@@ -48,8 +48,8 @@ function GamePage() {
     const setupStomp = async (roomId: string) => {
         try {
             await stomp.connect(roomId, "/topic/" + roomId, (newMessage: any) => {
-                handleNewMessage(newMessage.gameServer); // 새 메시지를 받았을 때 처리
-                if (newMessage.gameServer === "start") setIsGameStarted(true);
+                handleNewMessage(newMessage.content); // 새 메시지를 받았을 때 처리
+                if (newMessage.content === "start") setIsGameStarted(true);
             });
             // WebSocket 연결 완료 대기
             // stomp.subscribe("/topic/" + roomId, (newMessage: any) => {
