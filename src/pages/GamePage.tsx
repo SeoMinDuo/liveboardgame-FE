@@ -56,7 +56,7 @@ function GamePage() {
             //     handleNewMessage(newMessage.content); // 새 메시지를 받았을 때 처리
             //     if (newMessage.gameServer === "start") setIsGameStarted(true);
             // });
-            // console.log("이거 떠야함");
+            console.log("이거 떠야함 2");
             // stomp.send("/app/enterRoom/" + roomId, { name: "user1" });
             if (localStorage.getItem("isConnected") == null || localStorage.getItem("isConnected") === "false") {
                 localStorage.setItem("isConnected", "true");
