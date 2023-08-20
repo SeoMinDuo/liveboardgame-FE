@@ -71,11 +71,6 @@ function GamePage() {
                 handleNewMessage(newMessage.gameServer); // 새 메시지를 받았을 때 처리
                 if (newMessage.gameServer === "start") setIsGameStarted(true);
             });
-            // WebSocket 연결 완료 대기
-            // stomp.subscribe("/topic/" + roomId, (newMessage: any) => {
-            //     handleNewMessage(newMessage.content); // 새 메시지를 받았을 때 처리
-            //     if (newMessage.gameServer === "start") setIsGameStarted(true);
-            // });
             stomp.send("/app/enterRoom/" + roomId, { name: "user1" });
             
             setIsMatchingState(false); // 매칭 완료
@@ -103,9 +98,7 @@ function GamePage() {
 
     // roomId를 받고나서 해당 roomId로 연결하는 비동기 처리하는 함수
     const setMatch = async () => {
-        let roomId = await getRoomId().catch((err) => {
-            console.log(err);
-        });
+        let roomId = await getRoomId();
         if (roomId) await setupStomp(roomId);
     };
 
