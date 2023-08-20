@@ -18,7 +18,7 @@ function GamePage() {
     const [isMatchingState, setIsMatchingState] = useState(true);
     const [isGameStarted, setIsGameStarted] = useState(false);
     const [time, setTime] = useState(0);
-    const [isMyTurn, setIsMyTurn] = useState(true);
+    const [isMyTurn, setIsMyTurn] = useState(false);
 
     let roomId = useRef("-1");
     let stopFinding = useRef(false);
