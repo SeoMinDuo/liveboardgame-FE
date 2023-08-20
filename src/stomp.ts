@@ -17,13 +17,12 @@ class StompService {
                     console.log("WebSocket 구독을 시도합니다."); // 연결되지 않았을 때 처리
                     // 추가: WebSocket 연결 상태 확인
                     if (this.stompClient) {
-                        this.stompSubscription?.push(
-                            this.stompClient.subscribe(destination, (message: Stomp.Message) => {
-                                if (message.body) {
-                                    callback(JSON.parse(message.body));
-                                }
-                            })
-                        );
+                        const newSubscribtion = this.stompClient.subscribe(destination, (message: Stomp.Message) => {
+                            if (message.body) {
+                                callback(JSON.parse(message.body));
+                            }
+                        });
+                        this.stompSubscription?.push(newSubscribtion);
                     }
                     resolve();
                 },
