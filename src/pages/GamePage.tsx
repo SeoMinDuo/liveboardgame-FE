@@ -77,9 +77,7 @@ function GamePage() {
             //     if (newMessage.gameServer === "start") setIsGameStarted(true);
             // });
             stomp.send("/app/enterRoom/" + roomId, { name: "user1" });
-            if (localStorage.getItem("isConnected") == null || localStorage.getItem("isConnected") === "false") {
-                localStorage.setItem("isConnected", "true");
-            }
+            
             setIsMatchingState(false); // 매칭 완료
         } catch (error) {
             console.error("WebSocket 연결 실패:", error);
@@ -121,7 +119,6 @@ function GamePage() {
         setMatch(); // login이 true인 경우만 실행
 
         return () => {
-            localStorage.setItem("isConnected", "false");
             stomp.unsubscribe();
             stomp.disconnect();
             stopFinding.current = true;
