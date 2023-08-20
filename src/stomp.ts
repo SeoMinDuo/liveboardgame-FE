@@ -11,14 +11,14 @@ class StompService {
                 () => {
                     console.log("Websocket 연결 성공");
                     if (this.stompClient) {
-                        return (this.stompSubscription = this.stompClient.subscribe(
+                        this.stompSubscription = this.stompClient.subscribe(
                             "topic/" + roomId,
                             (message: Stomp.Message) => {
                                 if (message.body) {
                                     callback(JSON.parse(message.body));
                                 }
                             }
-                        ));
+                        );
                     }
                     resolve();
                 },
