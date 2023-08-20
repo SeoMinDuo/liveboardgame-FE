@@ -33,9 +33,9 @@ function GamePage() {
     };
 
     const updateBoard = (x: number, y: number, own: string) => {
-        if (own === "XXXID") return;
+        // if (own === "XXXID") return;
         const newBoardData = [...boardData];
-        newBoardData[y][x] = "own";
+        if (newBoardData[y][x] === "") newBoardData[y][x] = "YOU";
         setBoardData(newBoardData);
     };
 
