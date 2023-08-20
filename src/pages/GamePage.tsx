@@ -57,14 +57,14 @@ function GamePage() {
     const updateBoard = (x: number, y: number, own: string) => {
         console.log("updateBoard");
 
-        const newBoardData = [...boardData];
         if (own === login.loginInfo.id) setIsMyTurn(false);
         else {
+            const newBoardData = [...boardData];
             newBoardData[y][x] = "YOU";
             setIsMyTurn(true);
+            boardData = newBoardData;
+            setTempBoardData(newBoardData);
         }
-        boardData = newBoardData;
-        setTempBoardData(newBoardData);
     };
 
     // stomp 메세지 수신 구독 중인지 확인하는 함수
