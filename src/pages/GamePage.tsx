@@ -38,9 +38,9 @@ function GamePage() {
         console.log("handleCellClick");
 
         if (isMyTurn === false) return;
-        const newBoardData = [...boardData.current];
 
-        newBoardData[y][x] = "ME"; // 예시로 X 말 추가
+        const newBoardData = [...boardData.current];
+        if (newBoardData[y][x] === "") newBoardData[y][x] = "ME"; // 예시로 X 말 추가
         setPos({ x, y });
         setTempBoardData(newBoardData);
     };
