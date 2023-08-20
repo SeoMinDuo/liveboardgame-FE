@@ -12,32 +12,10 @@ function GamePage() {
     const [inputMessage, setInputMessage] = useState<string>("");
     const [isMatchingState, setIsMatchingState] = useState(true);
     const [isGameStarted, setIsGameStarted] = useState(false);
-    const [time, setTime] = useState(0);
-    const [isMyTurn, setIsMyTurn] = useState(false);
 
-    let roomId = useRef("-1");
     let stopFinding = useRef(false);
     const login = useLoginContext();
     const navigate = useNavigate();
-
-    // GameBoard
-    const initialBoardData: string[][] = Array.from({ length: 9 }, () => Array.from({ length: 9 }, () => ""));
-
-    const [boardData, setBoardData] = useState<string[][]>(initialBoardData);
-
-    const handleCellClick = (x: number, y: number) => {
-        const newBoardData = [...boardData];
-        newBoardData[y][x] = "ME"; // 예시로 X 말 추가
-        stomp.send("/app/gameboard/" + roomId.current, { x, y, name: "XXXID" });
-        setBoardData(newBoardData);
-    };
-
-    const updateBoard = (x: number, y: number, own: string) => {
-        if (own === "XXXID") return;
-        const newBoardData = [...boardData];
-        newBoardData[y][x] = "own";
-        setBoardData(newBoardData);
-    };
 
     // input으로 메세지가 들어오면 inputMessage 수정
     const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>): void => {
@@ -69,41 +47,26 @@ function GamePage() {
     // stomp 연결, stomp 메세지 수신 구독
     const setupStomp = async (roomId: string) => {
         try {
-            // 소켓 연결
-            await stomp.connect(roomId, (newMessage: any) => {
-                handleNewMessage(newMessage.content); // 새 메시지를 받았을 때 처리
-                if (newMessage.content === "start") setIsGameStarted(true);
+            await stomp.connect(roomId, "/topic/" + roomId, (newMessage: any) => {
+                handleNewMessage(newMessage.gameServer); // 새 메시지를 받았을 때 처리
+                if (newMessage.gameServer === "start") setIsGameStarted(true);
             });
-
-            // 새로운 말 배치 수신 구독
-            // stomp.subscribe("/app/gameboard/" + roomId.current, (newMessage: any) => {
-            //     updateBoard(newMessage.x, newMessage.y, newMessage.name);
-            // });
-
-            // // 게임 시간 카운트 수신 구독
-            // stomp.subscribe("topic/gameboard/" + roomId.current, (newMessage: any) => {
-            //     setTime(newMessage.time);
-            // });
-
-            // 게임 시작 신호 수신 구독
-            // stomp.subscribe("topic/" + roomId.current, (newMessage: any) => {
+            // WebSocket 연결 완료 대기
+            // stomp.subscribe("/topic/" + roomId, (newMessage: any) => {
             //     handleNewMessage(newMessage.content); // 새 메시지를 받았을 때 처리
-            //     if (newMessage.content === "start") setIsGameStarted(true);
+            //     if (newMessage.gameServer === "start") setIsGameStarted(true);
             // });
-
-            // 게임 시작시 필요한 추가 정보 송신
             stomp.send("/app/enterRoom/" + roomId, { name: "user1" });
-
-            // 매칭 완료
-            setIsMatchingState(false);
+            if (localStorage.getItem("isConnected") == null || localStorage.getItem("isConnected") === "false") {
+                localStorage.setItem("isConnected", "true");
+            }
+            setIsMatchingState(false); // 매칭 완료
         } catch (error) {
             console.error("WebSocket 연결 실패:", error);
         }
     };
 
     // stomp 연결 전 게임 연결할 roomId 가져오는 함수
-    const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
-
     const getRoomId = async (): Promise<string> => {
         try {
             const res = await axios.get("http://localhost:8080/roomId", {
@@ -138,6 +101,7 @@ function GamePage() {
         setMatch(); // login이 true인 경우만 실행
 
         return () => {
+            localStorage.setItem("isConnected", "false");
             stomp.unsubscribe();
             stomp.disconnect();
             stopFinding.current = true;
@@ -145,12 +109,11 @@ function GamePage() {
     }, [login, navigate]);
 
     return (
-        <div className="bg-myWhite h-screen w-screen flex justify-center items-center">
+        <div className="bg-myWhite h-screen flex justify-center items-center">
             {login.loginInfo.isLogin ? (
                 isGameStarted ? (
-                    <div className="w-screen h-screen justify-center items-center flex flex-col ">
-                        <div>{time}</div>
-                        <GameBoard data={boardData} onCellClick={handleCellClick} />
+                    <div className="flex flex-col">
+                        <GameBoard />
                         게임이 시작되었습니다.
                         <button onClick={() => setIsGameStarted(false)} className="p-1 border border-gray-400">
                             강제 게임 종료 버튼
