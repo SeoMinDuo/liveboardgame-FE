@@ -18,7 +18,7 @@ function GamePage() {
     const [isMatchingState, setIsMatchingState] = useState(true);
     const [isGameStarted, setIsGameStarted] = useState(false);
     const [time, setTime] = useState(0);
-    const [isMyTurn, setIsMyTurn] = useState(false);
+    const [isMyTurn, setIsMyTurn] = useState(true);
 
     let roomId = useRef("-1");
     let stopFinding = useRef(false);
@@ -30,18 +30,19 @@ function GamePage() {
 
     const boardData = useRef<string[][]>([...initialBoardData]);
 
-    const [tempBoardData, setTempBoardData] = useState<string[][]>(initialBoardData);
+    const [tempBoardData, setTempBoardData] = useState<string[][]>([...initialBoardData]);
 
-    const [pos, setPos] = useState<Pos>();
+    const pos = useRef<Pos>();
 
     const handleCellClick = (x: number, y: number) => {
         console.log("handleCellClick");
 
         if (isMyTurn === false) return;
+        console.log(boardData);
 
-        const newBoardData = [...boardData.current];
+        const newBoardData = boardData.current.map((row) => [...row]);
         if (newBoardData[y][x] === "") newBoardData[y][x] = "ME"; // 예시로 X 말 추가
-        setPos({ x, y });
+        pos.current = { x, y };
         setTempBoardData(newBoardData);
     };
 
@@ -50,7 +51,11 @@ function GamePage() {
 
         setIsMyTurn(false);
         boardData.current = [...tempBoardData];
-        stomp.send("/app/gameboard/" + roomId.current, { x: pos?.x, y: pos?.y, name: login.loginInfo.id });
+        stomp.send("/app/gameboard/" + roomId.current, {
+            x: pos.current?.x,
+            y: pos.current?.y,
+            name: login.loginInfo.id,
+        });
     };
 
     const updateBoard = (x: number, y: number, own: string) => {
@@ -59,7 +64,7 @@ function GamePage() {
         if (own === login.loginInfo.id) setIsMyTurn(false); // 내가 이미 배치한 내용
         else {
             // 상대가 배치한 내용
-            const newBoardData = [...boardData.current];
+            const newBoardData = boardData.current.map((row) => [...row]);
             newBoardData[y][x] = "YOU";
             setIsMyTurn(true);
             boardData.current = newBoardData;
