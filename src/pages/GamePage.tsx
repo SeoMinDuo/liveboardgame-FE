@@ -107,9 +107,7 @@ function GamePage() {
     const getRoomId = async () => {
         while (!stopFinding.current) {
             try {
-                const res = await axios.get("http://localhost:8080/roomId", {
-                    params: { XXXID: "123" },
-                });
+                const res = await axios.get("http://localhost:8080/roomId");
                 roomId.current = res.data.roomId;
                 return;
             } catch (err) {
