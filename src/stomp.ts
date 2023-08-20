@@ -2,7 +2,7 @@ import Stomp from "stompjs";
 const WebSocketUrl = "ws://localhost:8080/ws"; // Spring 서버의 WebSocket 주소로 변경해주세요.
 class StompService {
     private stompClient: Stomp.Client | null = null;
-    private stompSubscription!: Stomp.Subscription | null;
+    private stompSubscription!: Stomp.Subscription[] | null;
     public async connect(
         roomId: string,
         destination: string,
@@ -17,11 +17,13 @@ class StompService {
                     console.log("WebSocket 구독을 시도합니다."); // 연결되지 않았을 때 처리
                     // 추가: WebSocket 연결 상태 확인
                     if (this.stompClient) {
-                        this.stompSubscription = this.stompClient.subscribe(destination, (message: Stomp.Message) => {
-                            if (message.body) {
-                                callback(JSON.parse(message.body));
-                            }
-                        });
+                        this.stompSubscription?.push(
+                            this.stompClient.subscribe(destination, (message: Stomp.Message) => {
+                                if (message.body) {
+                                    callback(JSON.parse(message.body));
+                                }
+                            })
+                        );
                     }
                     resolve();
                 },
