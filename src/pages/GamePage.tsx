@@ -12,6 +12,26 @@ function GamePage() {
     const [inputMessage, setInputMessage] = useState<string>("");
     const [isMatchingState, setIsMatchingState] = useState(true);
     const [isGameStarted, setIsGameStarted] = useState(false);
+    const [time, setTime] = useState(0);
+
+    // GameBoard
+    const initialBoardData: string[][] = Array.from({ length: 9 }, () => Array.from({ length: 9 }, () => ""));
+
+    const [boardData, setBoardData] = useState<string[][]>(initialBoardData);
+
+    const handleCellClick = (x: number, y: number) => {
+        const newBoardData = [...boardData];
+        newBoardData[y][x] = "ME"; // 예시로 X 말 추가
+        // stomp.send("/app/gameboard/" + roomId.current, { x, y, name: "XXXID" });
+        setBoardData(newBoardData);
+    };
+
+    const updateBoard = (x: number, y: number, own: string) => {
+        if (own === "XXXID") return;
+        const newBoardData = [...boardData];
+        newBoardData[y][x] = "own";
+        setBoardData(newBoardData);
+    };
 
     let stopFinding = useRef(false);
     const login = useLoginContext();
@@ -112,8 +132,9 @@ function GamePage() {
         <div className="bg-myWhite h-screen flex justify-center items-center">
             {login.loginInfo.isLogin ? (
                 isGameStarted ? (
-                    <div className="flex flex-col">
-                        <GameBoard />
+                    <div className="w-screen h-screen justify-center items-center flex flex-col ">
+                        <div>{time}</div>
+                        <GameBoard data={boardData} onCellClick={handleCellClick} />
                         게임이 시작되었습니다.
                         <button onClick={() => setIsGameStarted(false)} className="p-1 border border-gray-400">
                             강제 게임 종료 버튼
