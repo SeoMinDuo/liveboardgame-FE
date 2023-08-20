@@ -68,13 +68,16 @@ function GamePage() {
     // stomp 연결, stomp 메세지 수신 구독
     const setupStomp = async () => {
         try {
-            await stomp.connect(roomId.current, "/topic/" + roomId.current, (newMessage: any) => {
-                handleNewMessage(newMessage.gameServer); // 새 메시지를 받았을 때 처리
-                if (newMessage.gameServer === "start") setIsGameStarted(true);
-            });
-            stomp.subscribe("topic/gameboard/" + roomId.current, (newMessage: any) => {
-                console.log("topic/gameboard/roomid");
-            });
+            await stomp.connect(
+                roomId.current,
+                (newMessage: any) => {
+                    handleNewMessage(newMessage.gameServer); // 새 메시지를 받았을 때 처리
+                    if (newMessage.gameServer === "start") setIsGameStarted(true);
+                },
+                (newMessage: any) => {
+                    updateBoard(newMessage.x, newMessage.y, newMessage.name);
+                }
+            );
             stomp.send("/app/enterRoom/" + roomId.current, { name: "user1" });
 
             setIsMatchingState(false); // 매칭 완료

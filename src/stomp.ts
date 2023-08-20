@@ -5,8 +5,8 @@ class StompService {
     private stompSubscription!: Stomp.Subscription[] | null;
     public async connect(
         roomId: string,
-        destination: string,
-        callback: (message: Stomp.Message) => void
+        callback1: (message: Stomp.Message) => void,
+        callback2: (message: Stomp.Message) => void
     ): Promise<void> {
         this.stompClient = Stomp.over(new WebSocket(WebSocketUrl));
         return await new Promise((resolve, reject) => {
@@ -17,11 +17,23 @@ class StompService {
                     console.log("WebSocket 구독을 시도합니다."); // 연결되지 않았을 때 처리
                     // 추가: WebSocket 연결 상태 확인
                     if (this.stompClient) {
-                        const newSubscribtion = this.stompClient.subscribe(destination, (message: Stomp.Message) => {
-                            if (message.body) {
-                                callback(JSON.parse(message.body));
+                        let newSubscribtion = this.stompClient.subscribe(
+                            "topic/" + roomId,
+                            (message: Stomp.Message) => {
+                                if (message.body) {
+                                    callback1(JSON.parse(message.body));
+                                }
                             }
-                        });
+                        );
+                        this.stompSubscription?.push(newSubscribtion);
+                        newSubscribtion = this.stompClient.subscribe(
+                            "topic/gameboard/" + roomId,
+                            (message: Stomp.Message) => {
+                                if (message.body) {
+                                    callback2(JSON.parse(message.body));
+                                }
+                            }
+                        );
                         this.stompSubscription?.push(newSubscribtion);
                     }
                     resolve();
