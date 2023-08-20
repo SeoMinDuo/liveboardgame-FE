@@ -67,10 +67,10 @@ function GamePage() {
     };
 
     // stomp 연결, stomp 메세지 수신 구독
-    const setupStomp = async () => {
+    const setupStomp = async (roomId: string) => {
         try {
             // 소켓 연결
-            await stomp.connect(roomId.current, (newMessage: any) => {
+            await stomp.connect(roomId, (newMessage: any) => {
                 handleNewMessage(newMessage.content); // 새 메시지를 받았을 때 처리
                 if (newMessage.content === "start") setIsGameStarted(true);
             });
@@ -92,7 +92,7 @@ function GamePage() {
             // });
 
             // 게임 시작시 필요한 추가 정보 송신
-            stomp.send("/app/enterRoom/" + roomId.current, { name: "user1" });
+            stomp.send("/app/enterRoom/" + roomId, { name: "user1" });
 
             // 매칭 완료
             setIsMatchingState(false);
@@ -104,28 +104,28 @@ function GamePage() {
     // stomp 연결 전 게임 연결할 roomId 가져오는 함수
     const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
-    const getRoomId = async () => {
-        while (!stopFinding.current) {
-            try {
-                const res = await axios.get("http://localhost:8080/roomId", {
-                    params: { XXXID: "123" },
-                });
-                roomId.current = res.data.roomId;
-                return;
-            } catch (err) {
-                console.log("현재 방이 없습니다. 5초 뒤 다시 시도합니다.");
-                await wait(5000);
-            }
+    const getRoomId = async (): Promise<string> => {
+        try {
+            const res = await axios.get("http://localhost:8080/roomId", {
+                params: { XXXID: "123" },
+            });
+            const roomId: string = res.data.roomId;
+
+            return roomId;
+        } catch (err) {
+            console.log("현재 방이 없습니다. 5초 뒤 다시 시도합니다.");
+
+            await new Promise((resolve) => setTimeout(resolve, 5000));
+            return !stopFinding.current ? getRoomId() : Promise.reject("Component umounted"); // 재귀 호출로 다시 함수를 실행합니다.
         }
-        console.log("Component unmounted : getRoomId() 중지"); // stopFinding이 true인 경우
     };
 
-    // roomId를 받아와서 해당 roomId로 소켓 세팅 하는 함수
+    // roomId를 받고나서 해당 roomId로 연결하는 비동기 처리하는 함수
     const setMatch = async () => {
-        await getRoomId().catch(console.log);
-        if (roomId.current !== "-1") {
-            await setupStomp();
-        }
+        let roomId = await getRoomId().catch((err) => {
+            console.log(err);
+        });
+        if (roomId) await setupStomp(roomId);
     };
 
     // 로그인 여부 확인 후 stomp연결 하는 과정
