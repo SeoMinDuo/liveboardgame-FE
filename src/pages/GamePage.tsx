@@ -57,10 +57,12 @@ function GamePage() {
     const updateBoard = (x: number, y: number, own: string) => {
         console.log("updateBoard");
 
-        if (own === login.loginInfo.id) setIsMyTurn(false);
-        else setIsMyTurn(true);
         const newBoardData = [...boardData];
-        if (newBoardData[y][x] === "") newBoardData[y][x] = "YOU";
+        if (own === login.loginInfo.id) setIsMyTurn(false);
+        else {
+            newBoardData[y][x] = "YOU";
+            setIsMyTurn(true);
+        }
         boardData = newBoardData;
         setTempBoardData(newBoardData);
     };
