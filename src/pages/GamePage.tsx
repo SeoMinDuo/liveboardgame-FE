@@ -39,19 +39,6 @@ function GamePage() {
         setBoardData(newBoardData);
     };
 
-    // input으로 메세지가 들어오면 inputMessage 수정
-    const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>): void => {
-        setInputMessage(event.target.value);
-    };
-
-    // 서버로 input의 메세지 전송
-    const handleSendMessage = (): void => {
-        if (inputMessage.trim() !== "") {
-            stomp.send("/app/sendMessage", { text: inputMessage });
-            setInputMessage("");
-        }
-    };
-
     // stomp 메세지 수신 구독 중인지 확인하는 함수
     const checkSubscribe = (): void => {
         if (stomp.isSubscribed()) {
@@ -59,11 +46,6 @@ function GamePage() {
         } else {
             alert("구독중 아님");
         }
-    };
-
-    // 메세지가 들어오면 이전에 받았던 메세지와 합치는 함수
-    const handleNewMessage = (newMessage: string) => {
-        setMessages((prevMessages) => [...prevMessages, newMessage]);
     };
 
     // stomp 연결, stomp 메세지 수신 구독
@@ -84,8 +66,7 @@ function GamePage() {
 
             // 게임 시작 신호 수신 구독
             stomp.subscribe("/topic/" + roomId.current, (newMessage: any) => {
-                handleNewMessage(newMessage.content); // 새 메시지를 받았을 때 처리
-                if (newMessage.content === "start") setIsGameStarted(true);
+                if (newMessage.gameState === "start") setIsGameStarted(true);
             });
 
             // 게임 시작시 필요한 추가 정보 송신
@@ -171,8 +152,6 @@ function GamePage() {
                                 ))}
                             </ul>
                             <div className="flex flex-col">
-                                <input type="text" value={inputMessage} onChange={handleInputChange} />
-                                <button onClick={handleSendMessage}>Send</button>
                                 <button onClick={checkSubscribe} className="p-1 border border-gray-400">
                                     테스트 용 구독 체크
                                 </button>
