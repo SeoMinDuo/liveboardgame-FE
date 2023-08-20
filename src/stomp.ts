@@ -18,7 +18,7 @@ class StompService {
                     // 추가: WebSocket 연결 상태 확인
                     if (this.stompClient) {
                         let newSubscribtion = this.stompClient.subscribe(
-                            "topic/" + roomId,
+                            "/topic/" + roomId,
                             (message: Stomp.Message) => {
                                 if (message.body) {
                                     callback1(JSON.parse(message.body));
@@ -27,7 +27,7 @@ class StompService {
                         );
                         this.stompSubscription?.push(newSubscribtion);
                         newSubscribtion = this.stompClient.subscribe(
-                            "topic/gameboard/" + roomId,
+                            "/topic/gameboard/" + roomId,
                             (message: Stomp.Message) => {
                                 if (message.body) {
                                     callback2(JSON.parse(message.body));
