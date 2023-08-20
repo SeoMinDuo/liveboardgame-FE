@@ -73,14 +73,14 @@ function GamePage() {
             await stomp.connect();
 
             // 새로운 말 배치 수신 구독
-            stomp.subscribe("/app/gameboard/" + roomId.current, (newMessage: any) => {
-                updateBoard(newMessage.x, newMessage.y, newMessage.name);
-            });
+            // stomp.subscribe("/app/gameboard/" + roomId.current, (newMessage: any) => {
+            //     updateBoard(newMessage.x, newMessage.y, newMessage.name);
+            // });
 
-            // 게임 시간 카운트 수신 구독
-            stomp.subscribe("topic/gameboard/" + roomId.current, (newMessage: any) => {
-                setTime(newMessage.time);
-            });
+            // // 게임 시간 카운트 수신 구독
+            // stomp.subscribe("topic/gameboard/" + roomId.current, (newMessage: any) => {
+            //     setTime(newMessage.time);
+            // });
 
             // 게임 시작 신호 수신 구독
             stomp.subscribe("topic/" + roomId.current, (newMessage: any) => {
