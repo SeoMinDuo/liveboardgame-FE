@@ -5,7 +5,12 @@ import LoadingCircle from "../components/LoadingCircle";
 import GameBoard from "../components/GameBoard";
 import StompService from "../stomp";
 import axios from "axios";
+import { log } from "console";
 
+type Pos = {
+    x: number;
+    y: number;
+};
 const stomp = new StompService();
 function GamePage() {
     const [messages, setMessages] = useState<any[]>([]);
@@ -23,20 +28,41 @@ function GamePage() {
     // GameBoard
     const initialBoardData: string[][] = Array.from({ length: 9 }, () => Array.from({ length: 9 }, () => ""));
 
-    const [boardData, setBoardData] = useState<string[][]>(initialBoardData);
+    let boardData: string[][] = [...initialBoardData];
+
+    const [tempBoardData, setTempBoardData] = useState<string[][]>(initialBoardData);
+
+    const [pos, setPos] = useState<Pos>();
 
     const handleCellClick = (x: number, y: number) => {
+        console.log("handleCellClick");
+
+        if (isMyTurn === false) return;
         const newBoardData = [...boardData];
+        console.log(boardData);
+
         newBoardData[y][x] = "ME"; // 예시로 X 말 추가
-        stomp.send("/app/gameboard/" + roomId.current, { x, y, name: "XXXID" });
-        setBoardData(newBoardData);
+        setPos({ x, y });
+        setTempBoardData(newBoardData);
+    };
+
+    const sendNewPosition = () => {
+        console.log("sendNewPosition");
+
+        setIsMyTurn(false);
+        boardData = [...tempBoardData];
+        stomp.send("/app/gameboard/" + roomId.current, { x: pos?.x, y: pos?.y, name: login.loginInfo.id });
     };
 
     const updateBoard = (x: number, y: number, own: string) => {
-        // if (own === "XXXID") return;
+        console.log("updateBoard");
+
+        if (own === login.loginInfo.id) setIsMyTurn(false);
+        else setIsMyTurn(true);
         const newBoardData = [...boardData];
         if (newBoardData[y][x] === "") newBoardData[y][x] = "YOU";
-        setBoardData(newBoardData);
+        boardData = newBoardData;
+        setTempBoardData(newBoardData);
     };
 
     // stomp 메세지 수신 구독 중인지 확인하는 함수
@@ -59,18 +85,14 @@ function GamePage() {
                 updateBoard(newMessage.x, newMessage.y, newMessage.name);
             });
 
-            // 게임 시간 카운트 수신 구독
-            // stomp.subscribe("/gameboard/" + roomId.current, (newMessage: any) => {
-            //     setTime(newMessage.time);
-            // });
-
             // 게임 시작 신호 수신 구독
             stomp.subscribe("/topic/" + roomId.current, (newMessage: any) => {
                 if (newMessage.gameState === "start") setIsGameStarted(true);
+                if (newMessage.startUser === login.loginInfo.id) setIsMyTurn(true);
             });
 
             // 게임 시작시 필요한 추가 정보 송신
-            stomp.send("/app/enterRoom/" + roomId.current, { name: "user1" });
+            stomp.send("/app/enterRoom/" + roomId.current, { name: login.loginInfo.id });
 
             // 매칭 완료
             setIsMatchingState(false);
@@ -128,8 +150,10 @@ function GamePage() {
                 isGameStarted ? (
                     <div className="w-screen h-screen justify-center items-center flex flex-col ">
                         <div>{time}</div>
-                        <GameBoard data={boardData} onCellClick={handleCellClick} />
-                        게임이 시작되었습니다.
+                        <GameBoard data={tempBoardData} onCellClick={handleCellClick} />
+                        <button onClick={() => sendNewPosition()} className="p-1 border border-gray-400">
+                            배치 전송
+                        </button>
                         <button onClick={() => setIsGameStarted(false)} className="p-1 border border-gray-400">
                             강제 게임 종료 버튼
                         </button>
