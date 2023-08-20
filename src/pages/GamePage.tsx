@@ -13,7 +13,12 @@ function GamePage() {
     const [isMatchingState, setIsMatchingState] = useState(true);
     const [isGameStarted, setIsGameStarted] = useState(false);
     const [time, setTime] = useState(0);
-    const roomId = useRef("");
+    const [isMyTurn, setIsMyTurn] = useState(false);
+
+    let roomId = useRef("-1");
+    let stopFinding = useRef(false);
+    const login = useLoginContext();
+    const navigate = useNavigate();
 
     // GameBoard
     const initialBoardData: string[][] = Array.from({ length: 9 }, () => Array.from({ length: 9 }, () => ""));
@@ -33,10 +38,6 @@ function GamePage() {
         newBoardData[y][x] = "own";
         setBoardData(newBoardData);
     };
-
-    let stopFinding = useRef(false);
-    const login = useLoginContext();
-    const navigate = useNavigate();
 
     // input으로 메세지가 들어오면 inputMessage 수정
     const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>): void => {
@@ -68,45 +69,60 @@ function GamePage() {
     // stomp 연결, stomp 메세지 수신 구독
     const setupStomp = async () => {
         try {
-            await stomp.connect(
-                roomId.current,
-                (newMessage: any) => {
-                    handleNewMessage(newMessage.gameServer); // 새 메시지를 받았을 때 처리
-                    if (newMessage.gameServer === "start") setIsGameStarted(true);
-                },
-                (newMessage: any) => {
-                    updateBoard(newMessage.x, newMessage.y, newMessage.name);
-                }
-            );
+            // 소켓 연결
+            await stomp.connect();
+
+            // 새로운 말 배치 수신 구독
+            stomp.subscribe("/topic/gameboard/" + roomId.current, (newMessage: any) => {
+                updateBoard(newMessage.x, newMessage.y, newMessage.name);
+            });
+
+            // 게임 시간 카운트 수신 구독
+            // stomp.subscribe("/gameboard/" + roomId.current, (newMessage: any) => {
+            //     setTime(newMessage.time);
+            // });
+
+            // 게임 시작 신호 수신 구독
+            stomp.subscribe("/topic/" + roomId.current, (newMessage: any) => {
+                handleNewMessage(newMessage.content); // 새 메시지를 받았을 때 처리
+                if (newMessage.content === "start") setIsGameStarted(true);
+            });
+
+            // 게임 시작시 필요한 추가 정보 송신
             stomp.send("/app/enterRoom/" + roomId.current, { name: "user1" });
 
-            setIsMatchingState(false); // 매칭 완료
+            // 매칭 완료
+            setIsMatchingState(false);
         } catch (error) {
             console.error("WebSocket 연결 실패:", error);
         }
     };
 
     // stomp 연결 전 게임 연결할 roomId 가져오는 함수
-    const getRoomId = async (): Promise<void> => {
-        try {
-            const res = await axios.get("http://localhost:8080/roomId", {
-                params: { XXXID: "123" },
-            });
-            // const roomId: string = res.data.roomId;
-            roomId.current = res.data.roomId;
-            // return roomId;
-        } catch (err) {
-            console.log("현재 방이 없습니다. 5초 뒤 다시 시도합니다.");
+    const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
-            await new Promise((resolve) => setTimeout(resolve, 5000));
-            return !stopFinding.current ? getRoomId() : Promise.reject("Component umounted"); // 재귀 호출로 다시 함수를 실행합니다.
+    const getRoomId = async () => {
+        while (!stopFinding.current) {
+            try {
+                const res = await axios.get("http://localhost:8080/roomId", {
+                    params: { XXXID: "123" },
+                });
+                roomId.current = res.data.roomId;
+                return;
+            } catch (err) {
+                console.log("현재 방이 없습니다. 5초 뒤 다시 시도합니다.");
+                await wait(5000);
+            }
         }
+        console.log("Component unmounted : getRoomId() 중지"); // stopFinding이 true인 경우
     };
 
-    // roomId를 받고나서 해당 roomId로 연결하는 비동기 처리하는 함수
+    // roomId를 받아와서 해당 roomId로 소켓 세팅 하는 함수
     const setMatch = async () => {
-        await getRoomId();
-        await setupStomp();
+        await getRoomId().catch(console.log);
+        if (roomId.current !== "-1") {
+            await setupStomp();
+        }
     };
 
     // 로그인 여부 확인 후 stomp연결 하는 과정
@@ -126,7 +142,7 @@ function GamePage() {
     }, [login, navigate]);
 
     return (
-        <div className="bg-myWhite h-screen flex justify-center items-center">
+        <div className="bg-myWhite h-screen w-screen flex justify-center items-center">
             {login.loginInfo.isLogin ? (
                 isGameStarted ? (
                     <div className="w-screen h-screen justify-center items-center flex flex-col ">
