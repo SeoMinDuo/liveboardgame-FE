@@ -36,21 +36,22 @@ class StompService {
     public isConnected() {
         return this.stompClient?.connected || false;
     }
-    // public subscribe(destination: string, callback: (message: Stomp.Message) => void) {
-    //     if (this.isConnected()) {
-    //         console.log("WebSocket 구독을 시도합니다."); // 연결되지 않았을 때 처리
-    //         // 추가: WebSocket 연결 상태 확인
-    //         if (this.stompClient) {
-    //             return (this.stompSubscription = this.stompClient.subscribe(destination, (message: Stomp.Message) => {
-    //                 if (message.body) {
-    //                     callback(JSON.parse(message.body));
-    //                 }
-    //             }));
-    //         }
-    //     } else {
-    //         console.log("[구독 실패]WebSocket 연결이 필요합니다."); // 연결되지 않았을 때 처리
-    //     }
-    // }
+    public subscribe(destination: string, callback: (message: Stomp.Message) => void) {
+        if (this.isConnected()) {
+            console.log("WebSocket 구독을 시도합니다."); // 연결되지 않았을 때 처리
+            // 추가: WebSocket 연결 상태 확인
+            if (this.stompClient) {
+                const newSubscribtion = this.stompClient.subscribe(destination, (message: Stomp.Message) => {
+                    if (message.body) {
+                        callback(JSON.parse(message.body));
+                    }
+                });
+                this.stompSubscription?.push(newSubscribtion);
+            }
+        } else {
+            console.log("[구독 실패]WebSocket 연결이 필요합니다."); // 연결되지 않았을 때 처리
+        }
+    }
     public unsubscribe(): void {
         this.stompSubscription?.forEach((el) => {
             el.unsubscribe();

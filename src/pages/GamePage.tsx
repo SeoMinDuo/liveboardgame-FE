@@ -23,7 +23,7 @@ function GamePage() {
     const handleCellClick = (x: number, y: number) => {
         const newBoardData = [...boardData];
         newBoardData[y][x] = "ME"; // 예시로 X 말 추가
-        // stomp.send("/app/gameboard/" + roomId.current, { x, y, name: "XXXID" });
+        stomp.send("/app/gameboard/" + roomId.current, { x, y, name: "XXXID" });
         setBoardData(newBoardData);
     };
 
@@ -71,6 +71,9 @@ function GamePage() {
             await stomp.connect(roomId.current, "/topic/" + roomId.current, (newMessage: any) => {
                 handleNewMessage(newMessage.gameServer); // 새 메시지를 받았을 때 처리
                 if (newMessage.gameServer === "start") setIsGameStarted(true);
+            });
+            stomp.subscribe("topic/gameboard/" + roomId.current, (newMessage: any) => {
+                console.log("topic/gameboard/roomid");
             });
             stomp.send("/app/enterRoom/" + roomId.current, { name: "user1" });
 
