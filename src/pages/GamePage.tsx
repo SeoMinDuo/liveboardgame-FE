@@ -70,7 +70,10 @@ function GamePage() {
     const setupStomp = async () => {
         try {
             // 소켓 연결
-            await stomp.connect();
+            await stomp.connect(roomId.current, (newMessage: any) => {
+                handleNewMessage(newMessage.content); // 새 메시지를 받았을 때 처리
+                if (newMessage.content === "start") setIsGameStarted(true);
+            });
 
             // 새로운 말 배치 수신 구독
             // stomp.subscribe("/app/gameboard/" + roomId.current, (newMessage: any) => {
@@ -83,10 +86,10 @@ function GamePage() {
             // });
 
             // 게임 시작 신호 수신 구독
-            stomp.subscribe("topic/" + roomId.current, (newMessage: any) => {
-                handleNewMessage(newMessage.content); // 새 메시지를 받았을 때 처리
-                if (newMessage.content === "start") setIsGameStarted(true);
-            });
+            // stomp.subscribe("topic/" + roomId.current, (newMessage: any) => {
+            //     handleNewMessage(newMessage.content); // 새 메시지를 받았을 때 처리
+            //     if (newMessage.content === "start") setIsGameStarted(true);
+            // });
 
             // 게임 시작시 필요한 추가 정보 송신
             stomp.send("/app/enterRoom/" + roomId.current, { name: "user1" });

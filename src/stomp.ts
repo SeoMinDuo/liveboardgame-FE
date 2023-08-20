@@ -3,13 +3,23 @@ const WebSocketUrl = "ws://localhost:8080/ws"; // Spring 서버의 WebSocket 주
 class StompService {
     private stompClient: Stomp.Client | null = null;
     private stompSubscription!: Stomp.Subscription | null;
-    public async connect(): Promise<void> {
+    public async connect(roomId: string, callback: (message: Stomp.Message) => void): Promise<void> {
         this.stompClient = Stomp.over(new WebSocket(WebSocketUrl));
         return await new Promise((resolve, reject) => {
             this.stompClient?.connect(
                 {},
                 () => {
                     console.log("Websocket 연결 성공");
+                    if (this.stompClient) {
+                        return (this.stompSubscription = this.stompClient.subscribe(
+                            "topic/" + roomId,
+                            (message: Stomp.Message) => {
+                                if (message.body) {
+                                    callback(JSON.parse(message.body));
+                                }
+                            }
+                        ));
+                    }
                     resolve();
                 },
                 (error) => {
