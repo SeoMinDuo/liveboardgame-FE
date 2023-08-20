@@ -28,7 +28,7 @@ function GamePage() {
     // GameBoard
     const initialBoardData: string[][] = Array.from({ length: 9 }, () => Array.from({ length: 9 }, () => ""));
 
-    let boardData: string[][] = [...initialBoardData];
+    const boardData = useRef<string[][]>([...initialBoardData]);
 
     const [tempBoardData, setTempBoardData] = useState<string[][]>(initialBoardData);
 
@@ -38,8 +38,7 @@ function GamePage() {
         console.log("handleCellClick");
 
         if (isMyTurn === false) return;
-        const newBoardData = [...boardData];
-        console.log(boardData);
+        const newBoardData = [...boardData.current];
 
         newBoardData[y][x] = "ME"; // 예시로 X 말 추가
         setPos({ x, y });
@@ -50,19 +49,20 @@ function GamePage() {
         console.log("sendNewPosition");
 
         setIsMyTurn(false);
-        boardData = [...tempBoardData];
+        boardData.current = [...tempBoardData];
         stomp.send("/app/gameboard/" + roomId.current, { x: pos?.x, y: pos?.y, name: login.loginInfo.id });
     };
 
     const updateBoard = (x: number, y: number, own: string) => {
         console.log("updateBoard");
 
-        if (own === login.loginInfo.id) setIsMyTurn(false);
+        if (own === login.loginInfo.id) setIsMyTurn(false); // 내가 이미 배치한 내용
         else {
-            const newBoardData = [...boardData];
+            // 상대가 배치한 내용
+            const newBoardData = [...boardData.current];
             newBoardData[y][x] = "YOU";
             setIsMyTurn(true);
-            boardData = newBoardData;
+            boardData.current = newBoardData;
             setTempBoardData(newBoardData);
         }
     };
