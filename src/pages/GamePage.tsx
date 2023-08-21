@@ -5,7 +5,6 @@ import LoadingCircle from "../components/LoadingCircle";
 import GameBoard from "../components/GameBoard";
 import StompService from "../stomp";
 import axios from "axios";
-import { log } from "console";
 
 type Pos = {
   x: number;
@@ -15,9 +14,12 @@ const stomp = new StompService();
 function GamePage() {
   const [isMatchingState, setIsMatchingState] = useState(true);
   const [isGameStarted, setIsGameStarted] = useState(false);
-  const [seconds, setSeconds] = useState(60);
+  const [seconds, setSeconds] = useState(1);
   const [isMyTurn, setIsMyTurn] = useState(false);
   const [startTimer, setStartTimer] = useState(false);
+  const [turnMessage, setTurnMessage] = useState("");
+  const [showTurnMessage, setShowTurnMessage] = useState(false);
+  const [fade, setFade] = useState(true);
 
   let roomId = useRef("-1");
   let stopFinding = useRef(false);
@@ -41,7 +43,6 @@ function GamePage() {
     console.log("handleCellClick");
 
     if (isMyTurn === false) return;
-    console.log(boardData);
 
     const newBoardData = boardData.current.map((row) => [...row]);
     if (newBoardData[y][x] === "") newBoardData[y][x] = "ME"; // 예시로 X 말 추가
@@ -49,6 +50,7 @@ function GamePage() {
     setTempBoardData(newBoardData);
   };
 
+  // 서버로 배치한 말 보내기
   const sendNewPosition = () => {
     console.log("sendNewPosition");
 
@@ -59,6 +61,10 @@ function GamePage() {
       y: pos.current?.y,
       name: login.loginInfo.id,
     });
+
+    // 선택된 위치값 초기화
+    pos.current = { x: -1, y: -1 };
+    printTurnMessage("상대 턴!");
   };
 
   const updateBoard = (x: number, y: number, own: string) => {
@@ -67,22 +73,20 @@ function GamePage() {
     if (own === login.loginInfo.id) setIsMyTurn(false); // 내가 이미 배치한 내용
     else {
       // 상대가 배치한 내용
+      if (x === -1 || y === -1) {
+        // 상대가 아무 것도 배치하지 않았다면
+        printTurnMessage("상대가 패스하였습니다!");
+      }
       const newBoardData = boardData.current.map((row) => [...row]);
       newBoardData[y][x] = "YOU";
-      setIsMyTurn(true);
-      setStartTimer(true);
       boardData.current = newBoardData;
       setTempBoardData(newBoardData);
-    }
-  };
 
-  // stomp 메세지 수신 구독 중인지 확인하는 함수
-  const checkSubscribe = (): void => {
-    if (stomp.isSubscribed()) {
-      alert("구독중");
-    } else {
-      alert("구독중 아님");
+      // 보드 업데이트 후 내 차례
+      setIsMyTurn(true);
+      printTurnMessage("내 턴!");
     }
+    setStartTimer(true);
   };
 
   // stomp 연결, stomp 메세지 수신 구독
@@ -102,7 +106,10 @@ function GamePage() {
       // 게임 시작 신호 수신 구독
       stomp.subscribe("/topic/" + roomId.current, (newMessage: any) => {
         if (newMessage.gameState === "start") setIsGameStarted(true);
-        if (newMessage.startUser === login.loginInfo.id) setIsMyTurn(true);
+        if (newMessage.startUser === login.loginInfo.id) {
+          setIsMyTurn(true);
+          printTurnMessage("내 턴!");
+        }
       });
 
       // 게임 시작시 필요한 추가 정보 송신
@@ -159,6 +166,20 @@ function GamePage() {
     };
   }, [login, navigate]);
 
+  // 화면에 턴 메세지 출력하는 함수
+  const printTurnMessage = (message: string) => {
+    setTurnMessage(message);
+    setShowTurnMessage(true);
+    setTimeout(() => {
+      setFade(false); // 사라지는 애니메이션(1초)
+      setTimeout(() => {
+        // 애니메이션 종료 후 진짜 없애기
+        setShowTurnMessage(false);
+        setFade(true);
+      }, 1000);
+    }, 1000);
+  };
+
   // 60초 카운터
   useEffect(() => {
     let timerInterval: NodeJS.Timeout;
@@ -170,6 +191,10 @@ function GamePage() {
     } else if (seconds === 0) {
       // 0초일 때 특정 동작 실행
       console.log("Timer reached 0 seconds. Perform action here.");
+      if (isMyTurn) {
+        // 시간이 다되었으니 현재 선택된 위치값으로 서버에 전송
+        sendNewPosition();
+      }
     }
 
     return () => {
@@ -178,6 +203,15 @@ function GamePage() {
   }, [startTimer, seconds]);
   return (
     <div className="bg-myWhite h-screen w-screen flex justify-center items-center">
+      {showTurnMessage && (
+        <div
+          className={`fixed top-0 left-0 w-screen h-screen bg-black bg-opacity-80 text-white flex justify-center items-center text-2xl ${
+            fade ? "animate-[fadein_1s]" : "animate-[fadeout_1s]"
+          }`}
+        >
+          {turnMessage}
+        </div>
+      )}
       {login.loginInfo.isLogin ? (
         isGameStarted ? (
           <div className="w-screen h-screen justify-center items-center flex flex-col">
