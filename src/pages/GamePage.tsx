@@ -15,8 +15,9 @@ const stomp = new StompService();
 function GamePage() {
   const [isMatchingState, setIsMatchingState] = useState(true);
   const [isGameStarted, setIsGameStarted] = useState(false);
-  const [time, setTime] = useState(0);
+  const [seconds, setSeconds] = useState(60);
   const [isMyTurn, setIsMyTurn] = useState(false);
+  const [startTimer, setStartTimer] = useState(false);
 
   let roomId = useRef("-1");
   let stopFinding = useRef(false);
@@ -69,6 +70,7 @@ function GamePage() {
       const newBoardData = boardData.current.map((row) => [...row]);
       newBoardData[y][x] = "YOU";
       setIsMyTurn(true);
+      setStartTimer(true);
       boardData.current = newBoardData;
       setTempBoardData(newBoardData);
     }
@@ -157,12 +159,29 @@ function GamePage() {
     };
   }, [login, navigate]);
 
+  // 60초 카운터
+  useEffect(() => {
+    let timerInterval: NodeJS.Timeout;
+
+    if (startTimer && seconds > 0) {
+      timerInterval = setInterval(() => {
+        setSeconds((prevSeconds) => prevSeconds - 1);
+      }, 1000);
+    } else if (seconds === 0) {
+      // 0초일 때 특정 동작 실행
+      console.log("Timer reached 0 seconds. Perform action here.");
+    }
+
+    return () => {
+      clearInterval(timerInterval);
+    };
+  }, [startTimer, seconds]);
   return (
     <div className="bg-myWhite h-screen w-screen flex justify-center items-center">
       {login.loginInfo.isLogin ? (
         isGameStarted ? (
           <div className="w-screen h-screen justify-center items-center flex flex-col">
-            <div>{time}</div>
+            <div>{seconds}</div>
             <GameBoard data={tempBoardData} onCellClick={handleCellClick} />
             <button
               onClick={() => sendNewPosition()}
@@ -189,16 +208,13 @@ function GamePage() {
             <div>
               <div className="flex flex-col">
                 <button
-                  onClick={checkSubscribe}
+                  onClick={() => {
+                    setIsGameStarted(true);
+                    setStartTimer(true);
+                  }}
                   className="p-1 border border-gray-400"
                 >
-                  테스트 용 구독 체크
-                </button>
-                <button
-                  onClick={() => setIsGameStarted(true)}
-                  className="p-1 border border-gray-400"
-                >
-                  강제 게임 시작 버튼
+                  강제 게임 시작 및 타이머 시작
                 </button>
               </div>
             </div>
