@@ -161,7 +161,7 @@ function GamePage() {
     <div className="bg-myWhite h-screen w-screen flex justify-center items-center">
       {login.loginInfo.isLogin ? (
         isGameStarted ? (
-          <div className="w-screen h-screen justify-center items-center flex flex-col ">
+          <div className="w-screen h-screen justify-center items-center flex flex-col">
             <div>{time}</div>
             <GameBoard data={tempBoardData} onCellClick={handleCellClick} />
             <button
@@ -178,11 +178,10 @@ function GamePage() {
             </button>
           </div>
         ) : (
-          <div>
+          <div className="w-screen h-screen justify-center items-center flex flex-col">
             {isMatchingState ? (
               <div>
-                <LoadingCircle />
-                <span>매칭중</span>
+                <LoadingCircle className="m-[10px]" />
               </div>
             ) : (
               <div>매칭완료</div>

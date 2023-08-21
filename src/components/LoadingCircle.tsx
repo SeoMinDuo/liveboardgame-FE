@@ -1,7 +1,8 @@
-function LoadingCircle() {
+function LoadingCircle(props: { className: string }) {
+  const { className } = props;
   return (
     <svg
-      className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
+      className={`animate-spin h-20 w-20 ${className}`}
       xmlns="http://www.w3.org/2000/svg"
       fill="none"
       viewBox="0 0 24 24"
