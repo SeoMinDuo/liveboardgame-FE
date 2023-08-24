@@ -37,7 +37,7 @@ function GamePage() {
     ...initialBoardData,
   ]);
 
-  const pos = useRef<Pos>();
+  const pos = useRef<Pos>({ x: -1, y: -1 });
 
   const handleCellClick = (x: number, y: number) => {
     console.log("handleCellClick");
@@ -52,6 +52,8 @@ function GamePage() {
 
   // 서버로 배치한 말 보내기
   const sendNewPosition = () => {
+    if (!isMyTurn) return;
+    if (pos.current?.x === -1 || pos.current?.y === -1) return;
     console.log("sendNewPosition");
 
     setIsMyTurn(false);
@@ -217,12 +219,14 @@ function GamePage() {
           <div className="w-screen h-screen justify-center items-center flex flex-col">
             <div>{seconds}</div>
             <GameBoard data={tempBoardData} onCellClick={handleCellClick} />
-            <button
-              onClick={() => sendNewPosition()}
-              className="p-1 border border-gray-400"
-            >
-              배치 전송
-            </button>
+            {isMyTurn && (
+              <button
+                onClick={() => sendNewPosition()}
+                className="p-1 border border-gray-400"
+              >
+                배치 전송
+              </button>
+            )}
             <button
               onClick={() => setIsGameStarted(false)}
               className="p-1 border border-gray-400"
