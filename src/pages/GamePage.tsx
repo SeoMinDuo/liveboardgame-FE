@@ -14,7 +14,7 @@ const stomp = new StompService();
 function GamePage() {
   const [isMatchingState, setIsMatchingState] = useState(true);
   const [isGameStarted, setIsGameStarted] = useState(false);
-  const [seconds, setSeconds] = useState(1);
+  const [seconds, setSeconds] = useState(10);
   const [isMyTurn, setIsMyTurn] = useState(false);
   const [startTimer, setStartTimer] = useState(false);
   const [turnMessage, setTurnMessage] = useState("");
@@ -45,8 +45,12 @@ function GamePage() {
     if (isMyTurn === false) return;
 
     const newBoardData = boardData.current.map((row) => [...row]);
-    if (newBoardData[y][x] === "") newBoardData[y][x] = "ME"; // 예시로 X 말 추가
-    pos.current = { x, y };
+    if (newBoardData[y][x] === "") {
+      newBoardData[y][x] = "ME"; // 예시로 X 말 추가
+      pos.current = { x, y };
+    } else {
+      pos.current = { x: -1, y: -1 };
+    }
     setTempBoardData(newBoardData);
   };
 
