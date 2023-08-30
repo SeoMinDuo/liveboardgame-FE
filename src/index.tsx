@@ -7,27 +7,33 @@ import * as LoginInfoContext from "./context";
 import Main from "./pages/MainPage";
 import Login from "./pages/LoginPage";
 import Game from "./pages/GamePage";
-
+import KakaoCallback from "./components/KakaoCallback";
 const router = createBrowserRouter([
-    {
-        path: "/",
-        element: <Main />,
-    },
-    {
-        path: "/login",
-        element: <Login />,
-    },
-    {
-        path: "/game",
-        element: <Game />,
-    },
+  {
+    path: "/",
+    element: <Main />,
+  },
+  {
+    path: "/login",
+    element: <Login />,
+  },
+  {
+    path: "/game",
+    element: <Game />,
+  },
+  {
+    path: "/oauth",
+    element: <KakaoCallback />,
+  },
 ]);
 
-const root = ReactDOM.createRoot(document.getElementById("root") as HTMLElement);
+const root = ReactDOM.createRoot(
+  document.getElementById("root") as HTMLElement
+);
 root.render(
-    <LoginInfoContext.LoginProvider>
-        <RouterProvider router={router} />
-    </LoginInfoContext.LoginProvider>
+  <LoginInfoContext.LoginProvider>
+    <RouterProvider router={router} />
+  </LoginInfoContext.LoginProvider>
 );
 
 // If you want to start measuring performance in your app, pass a function

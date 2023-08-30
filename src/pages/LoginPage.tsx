@@ -1,7 +1,7 @@
-import { useState, ChangeEvent } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, ChangeEvent, useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useLoginContext } from "../context";
-
+import KakaoLogin from "../components/KakaoLogin";
 type LoginInfo = {
   id: string;
   pw: string;
@@ -9,6 +9,8 @@ type LoginInfo = {
 function LoginPage() {
   const [loginInfo, setLoginInfo] = useState<LoginInfo>({ id: "", pw: "" });
   const navigate = useNavigate();
+  const location = useLocation();
+  let { state } = location;
   const login = useLoginContext();
 
   const handleChange = (e: ChangeEvent<HTMLInputElement>): void => {
@@ -25,7 +27,11 @@ function LoginPage() {
     login.updateLoginInfo(loginInfo.id);
     navigate("/");
   };
-  
+  useEffect(() => {
+    if (state != null) {
+      alert(state.message);
+    }
+  }, []);
   return (
     <div className="bg-myWhite h-screen flex justify-center items-center flex-col">
       <div className="text-gray-900 text-[10vw] font-bold mb-5">
@@ -56,6 +62,7 @@ function LoginPage() {
       <button className="rounded-full active:bg-green-600 bg-green-600 hover:bg-green-500 py-1 mb-3 w-36">
         회원가입
       </button>
+      <KakaoLogin />
     </div>
   );
 }
