@@ -9,8 +9,9 @@ function KakaoLogin() {
     <img
       alt="카카오 로그인"
       src={kakaoImg}
-      style={{ margin: "0px 24px 16px 24px" }}
+      style={{ margin: "0px 24px 16px 24px", cursor: "pointer" }}
       onClick={() => (window.location.href = kakaoURL)}
+      className="hover:brightness-105"
     />
   );
 }
