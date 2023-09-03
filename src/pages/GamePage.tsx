@@ -71,7 +71,7 @@ function GamePage() {
         setStartTimer(true);
     };
 
-    const updateBoard = (x: number, y: number, own: string) => {
+    const updateBoard = async (x: number, y: number, own: string) => {
         console.log("updateBoard");
 
         if (own === login.loginInfo.id) setIsMyTurn(false); // 내가 이미 배치한 내용
@@ -79,7 +79,7 @@ function GamePage() {
             // 상대가 배치한 내용
             if (x === -1 || y === -1) {
                 // 상대가 아무 것도 배치하지 않았다면
-                printTurnMessage("상대가 패스하였습니다!");
+                await printTurnMessage("상대가 패스하였습니다!");
             } else {
                 const newBoardData = boardData.current.map((row) => [...row]);
                 newBoardData[y][x] = "YOU";
@@ -89,7 +89,7 @@ function GamePage() {
 
             // 보드 업데이트 후 내 차례
             setIsMyTurn(true);
-            printTurnMessage("내 턴!");
+            await printTurnMessage("내 턴!");
         }
         setSeconds(60);
         setStartTimer(true);
@@ -169,18 +169,35 @@ function GamePage() {
     }, [login, navigate]);
 
     // 화면에 턴 메세지 출력하는 함수
-    const printTurnMessage = (message: string) => {
-        setTurnMessage(message);
-        setShowTurnMessage(true);
-        setTimeout(() => {
-            setFade(false); // 사라지는 애니메이션(1초)
+    // const printTurnMessage = (message: string) => {
+    //     setTurnMessage(message);
+    //     setShowTurnMessage(true);
+    //     setTimeout(() => {
+    //         setFade(false); // 사라지는 애니메이션(1초)
+    //         setTimeout(() => {
+    //             // 애니메이션 종료 후 진짜 없애기
+    //             setShowTurnMessage(false);
+    //             setFade(true);
+    //         }, 1000);
+    //     }, 1000);
+    // };
+    const printTurnMessage = async (message: string) => {
+        return new Promise((resolve) => {
+            setTurnMessage(message);
+            setShowTurnMessage(true);
+
             setTimeout(() => {
-                // 애니메이션 종료 후 진짜 없애기
-                setShowTurnMessage(false);
-                setFade(true);
+                setFade(false); // 사라지는 애니메이션(1초)
+                setTimeout(() => {
+                    // 애니메이션 종료 후 진짜 없애기
+                    setShowTurnMessage(false);
+                    setFade(true);
+                    resolve(); // Promise를 완료하여 비동기 동작이 완료되었음을 알립니다.
+                }, 1000);
             }, 1000);
-        }, 1000);
+        });
     };
+
     const passThisTurn = () => {
         if (!isMyTurn) return;
 
