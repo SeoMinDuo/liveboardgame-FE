@@ -27,7 +27,10 @@ function GamePage() {
     const navigate = useNavigate();
 
     // GameBoard
-    const initialBoardData: string[][] = Array.from({ length: 9 }, () => Array.from({ length: 9 }, () => ""));
+    // const initialBoardData: string[][] = Array.from({ length: 9 }, () => Array.from({ length: 9 }, () => ""));
+    const initialBoardData: string[][] = Array.from({ length: 9 }, (_, row) =>
+        Array.from({ length: 9 }, (_, col) => (row === 4 && col === 4 ? "center" : ""))
+    );
 
     const boardData = useRef<string[][]>([...initialBoardData]);
 
