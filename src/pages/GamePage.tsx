@@ -184,7 +184,7 @@ function GamePage() {
     //         }, 1000);
     //     }, 1000);
     // };
-    const printTurnMessage = async (message: string) => {
+    const printTurnMessage = async (message: string): Promise<void> => {
         return new Promise((resolve) => {
             setTurnMessage(message);
             setShowTurnMessage(true);
