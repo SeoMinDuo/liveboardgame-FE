@@ -80,11 +80,12 @@ function GamePage() {
             if (x === -1 || y === -1) {
                 // 상대가 아무 것도 배치하지 않았다면
                 printTurnMessage("상대가 패스하였습니다!");
+            } else {
+                const newBoardData = boardData.current.map((row) => [...row]);
+                newBoardData[y][x] = "YOU";
+                boardData.current = newBoardData;
+                setTempBoardData(newBoardData);
             }
-            const newBoardData = boardData.current.map((row) => [...row]);
-            newBoardData[y][x] = "YOU";
-            boardData.current = newBoardData;
-            setTempBoardData(newBoardData);
 
             // 보드 업데이트 후 내 차례
             setIsMyTurn(true);
