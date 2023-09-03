@@ -67,6 +67,8 @@ function GamePage() {
         // 선택된 위치값 초기화
         pos.current = { x: -1, y: -1 };
         printTurnMessage("상대 턴!");
+        setSeconds(60);
+        setStartTimer(true);
     };
 
     const updateBoard = (x: number, y: number, own: string) => {
@@ -178,6 +180,20 @@ function GamePage() {
             }, 1000);
         }, 1000);
     };
+    const passThisTurn = () => {
+        if (!isMyTurn) return;
+
+        setIsMyTurn(false);
+        stomp.send("/app/gameboard/" + roomId.current, {
+            x: -1,
+            y: -1,
+            name: login.loginInfo.id,
+        });
+
+        // 선택된 위치값 초기화
+        pos.current = { x: -1, y: -1 };
+        printTurnMessage("상대 턴!");
+    };
 
     // 60초 카운터
     useEffect(() => {
@@ -217,9 +233,14 @@ function GamePage() {
                         <div>{seconds}</div>
                         <GameBoard data={tempBoardData} onCellClick={handleCellClick} />
                         {isMyTurn && (
-                            <button onClick={() => sendNewPosition()} className="p-1 border border-gray-400">
-                                배치 전송
-                            </button>
+                            <>
+                                <button onClick={() => sendNewPosition()} className="p-1 border border-gray-400">
+                                    배치 전송
+                                </button>
+                                <button onClick={() => passThisTurn()} className="p-1 border border-gray-400">
+                                    패스
+                                </button>
+                            </>
                         )}
                         <button onClick={() => setIsGameStarted(false)} className="p-1 border border-gray-400">
                             강제 게임 종료 버튼
