@@ -1,6 +1,6 @@
 import React from "react";
-import myCastle from "../images/my-castle.svg";
-import enemyCastle from "../images/enemy-castle.svg";
+import greenCastle from "../images/green-castle.svg";
+import redCastle from "../images/red-castle.svg";
 
 interface BoardCellProps {
   player: string;
@@ -13,8 +13,8 @@ const BoardCell: React.FC<BoardCellProps> = ({ player, onClick }) => {
       className="border w-full h-full border-gray-400 flex items-center justify-center aspect-square"
       onClick={onClick}
     >
-      {player === "ME" && <img src={myCastle} alt="my castle" />}
-      {player === "YOU" && <img src={enemyCastle} alt="enemy castle" />}
+      {player === "Green" && <img src={greenCastle} alt="my castle" />}
+      {player === "Red" && <img src={redCastle} alt="enemy castle" />}
     </div>
   );
 };
