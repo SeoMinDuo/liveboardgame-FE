@@ -95,17 +95,18 @@ function GamePage() {
       // 상대가 배치한 내용
       if (x === -1 || y === -1) {
         // 상대가 아무 것도 배치하지 않았다면
-        await printTurnMessage("상대가 패스하였습니다!");
+        await printTurnMessage("상대가 패스하였습니다!\n내 턴!");
       } else {
         const newBoardData = boardData.current.map((row) => [...row]);
         newBoardData[y][x] = oppCastleColor.current!;
         boardData.current = newBoardData;
         setTempBoardData(newBoardData);
+
+        await printTurnMessage("내 턴!");
       }
 
       // 보드 업데이트 후 내 차례
       setIsMyTurn(true);
-      await printTurnMessage("내 턴!");
     }
   };
 
@@ -234,7 +235,7 @@ function GamePage() {
       y: -1,
       name: login.loginInfo.id,
     });
-
+    setTempBoardData(boardData.current);
     // 선택된 위치값 초기화
     pos.current = { x: -1, y: -1 };
     printTurnMessage("상대 턴!");
@@ -267,7 +268,7 @@ function GamePage() {
     <div className="bg-myWhite h-screen w-screen flex justify-center items-center">
       {showTurnMessage && (
         <div
-          className={`fixed top-0 left-0 w-screen h-screen bg-black bg-opacity-80 text-white flex justify-center items-center text-2xl ${
+          className={`whitespace-pre-line text-center fixed top-0 left-0 w-screen h-screen bg-black bg-opacity-80 text-white flex justify-center items-center text-2xl ${
             fade ? "animate-[fadein_1s]" : "animate-[fadeout_1s]"
           }`}
         >
