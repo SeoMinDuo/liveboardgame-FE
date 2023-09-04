@@ -80,15 +80,17 @@ function GamePage() {
 
     // 선택된 위치값 초기화
     pos.current = { x: -1, y: -1 };
-    printTurnMessage("상대 턴!");
-    setSeconds(60);
-    setStartTimer(true);
+    setStartTimer(false);
   };
 
   const updateBoard = async (x: number, y: number, own: string) => {
     console.log("updateBoard");
-
-    if (own === login.loginInfo.id) setIsMyTurn(false); // 내가 이미 배치한 내용
+    setSeconds(60);
+    setStartTimer(true);
+    if (own === login.loginInfo.id) {
+      printTurnMessage("상대 턴!");
+      setIsMyTurn(false);
+    } // 내가 이미 배치한 내용
     else {
       // 상대가 배치한 내용
       if (x === -1 || y === -1) {
@@ -105,8 +107,6 @@ function GamePage() {
       setIsMyTurn(true);
       await printTurnMessage("내 턴!");
     }
-    setSeconds(60);
-    setStartTimer(true);
   };
 
   // stomp 연결, stomp 메세지 수신 구독
@@ -125,16 +125,18 @@ function GamePage() {
 
       // 게임 시작 신호 수신 구독
       stomp.subscribe("/topic/" + roomId.current, (newMessage: any) => {
-        if (newMessage.gameState === "start") setIsGameStarted(true);
-        if (newMessage.startUser === login.loginInfo.id) {
-          setIsMyTurn(true);
-          myCastleColor.current = "Green";
-          oppCastleColor.current = "Red";
-          printTurnMessage("내 턴!");
-          setStartTimer(true);
-        } else {
-          myCastleColor.current = "Red";
-          oppCastleColor.current = "Green";
+        if (newMessage.gameState === "start") {
+          setIsGameStarted(true);
+          if (newMessage.startUser === login.loginInfo.id) {
+            setIsMyTurn(true);
+            myCastleColor.current = "Green";
+            oppCastleColor.current = "Red";
+            printTurnMessage("내 턴!");
+          } else {
+            myCastleColor.current = "Red";
+            oppCastleColor.current = "Green";
+            printTurnMessage("상대 턴!");
+          }
           setStartTimer(true);
         }
       });
