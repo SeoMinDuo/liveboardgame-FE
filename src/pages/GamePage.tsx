@@ -21,9 +21,9 @@ function GamePage() {
   const [showTurnMessage, setShowTurnMessage] = useState(false);
   const [fade, setFade] = useState(true);
 
-  type CastleColor = 'Green' | "Red";
-  let castleColor : CastleColor;
-  
+  type CastleColor = "Green" | "Red";
+  let myCastleColor = useRef<CastleColor>();
+  let oppCastleColor = useRef<CastleColor>();
   let roomId = useRef("-1");
   let stopFinding = useRef(false);
   const login = useLoginContext();
@@ -47,12 +47,13 @@ function GamePage() {
 
   const handleCellClick = (x: number, y: number) => {
     console.log("handleCellClick");
+    console.log(myCastleColor.current);
 
     if (isMyTurn === false) return;
 
     const newBoardData = boardData.current.map((row) => [...row]);
     if (newBoardData[y][x] === "") {
-      newBoardData[y][x] = castleColor; // 예시로 X 말 추가
+      newBoardData[y][x] = myCastleColor.current!; // 예시로 X 말 추가
       pos.current = { x, y };
     } else {
       pos.current = { x: -1, y: -1 };
@@ -63,7 +64,10 @@ function GamePage() {
   // 서버로 배치한 말 보내기
   const sendNewPosition = () => {
     if (!isMyTurn) return;
-    if (pos.current?.x === -1 || pos.current?.y === -1) return;
+    if (pos.current?.x === -1 || pos.current?.y === -1) {
+      passThisTurn();
+      return;
+    }
     console.log("sendNewPosition");
 
     setIsMyTurn(false);
@@ -92,7 +96,7 @@ function GamePage() {
         await printTurnMessage("상대가 패스하였습니다!");
       } else {
         const newBoardData = boardData.current.map((row) => [...row]);
-        newBoardData[y][x] = "YOU";
+        newBoardData[y][x] = oppCastleColor.current!;
         boardData.current = newBoardData;
         setTempBoardData(newBoardData);
       }
@@ -124,10 +128,14 @@ function GamePage() {
         if (newMessage.gameState === "start") setIsGameStarted(true);
         if (newMessage.startUser === login.loginInfo.id) {
           setIsMyTurn(true);
-          castleColor = 'Green'
+          myCastleColor.current = "Green";
+          oppCastleColor.current = "Red";
           printTurnMessage("내 턴!");
-        } else{
-          castleColor = 'Red'
+          setStartTimer(true);
+        } else {
+          myCastleColor.current = "Red";
+          oppCastleColor.current = "Green";
+          setStartTimer(true);
         }
       });
 
@@ -243,6 +251,8 @@ function GamePage() {
       console.log("Timer reached 0 seconds. Perform action here.");
       if (isMyTurn) {
         // 시간이 다되었으니 현재 선택된 위치값으로 서버에 전송
+        console.log(isMyTurn);
+
         sendNewPosition();
       }
     }
