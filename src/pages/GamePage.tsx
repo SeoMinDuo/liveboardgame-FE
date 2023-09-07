@@ -83,8 +83,35 @@ function GamePage() {
     setStartTimer(false);
   };
 
-  const updateBoard = async (x: number, y: number, own: string) => {
+  const updateBoard = async (
+    x: number,
+    y: number,
+    own: string,
+    gameState: number
+  ) => {
     console.log("updateBoard");
+    // 경기 끝났는지 체크
+    // if gameState == 0 , 1, 2 ,3
+    if (gameState !== 0) {
+      if (gameState === 1) {
+        if (own === login.loginInfo.id) {
+          await printTurnMessage("영토 승리!");
+        } else {
+          await printTurnMessage("영토 패배..");
+        }
+      } else if (gameState === 2) {
+        if (own === login.loginInfo.id) {
+          await printTurnMessage("상대 성을 격파하였습니다!\n 승리!");
+        } else {
+          await printTurnMessage("아군 성이 파괴되었습니다..\n 패배..");
+        }
+      } else if (gameState === 3) {
+        await printTurnMessage("명승부였네요.\n비겼습니다!");
+      }
+      setIsGameStarted(false);
+      return;
+    }
+
     setSeconds(60);
     setStartTimer(true);
     if (own === login.loginInfo.id) {
@@ -120,7 +147,12 @@ function GamePage() {
       stomp.subscribe(
         "/topic/gameboard/" + roomId.current,
         (newMessage: any) => {
-          updateBoard(newMessage.x, newMessage.y, newMessage.name);
+          updateBoard(
+            newMessage.x,
+            newMessage.y,
+            newMessage.name,
+            newMessage.gameState
+          );
         }
       );
 
