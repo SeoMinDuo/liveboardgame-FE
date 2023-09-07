@@ -90,48 +90,74 @@ function GamePage() {
     gameState: number
   ) => {
     console.log("updateBoard");
-    // 경기 끝났는지 체크
-    // if gameState == 0 , 1, 2 ,3
-    if (gameState !== 0) {
-      if (gameState === 1) {
-        if (own === login.loginInfo.id) {
-          await printTurnMessage("영토 승리!");
-        } else {
-          await printTurnMessage("영토 패배..");
-        }
-      } else if (gameState === 2) {
-        if (own === login.loginInfo.id) {
-          await printTurnMessage("상대 성을 격파하였습니다!\n 승리!");
-        } else {
-          await printTurnMessage("아군 성이 파괴되었습니다..\n 패배..");
-        }
-      } else if (gameState === 3) {
-        await printTurnMessage("명승부였네요.\n비겼습니다!");
-      }
-      setIsGameStarted(false);
-      return;
-    }
 
+    // 게임시간 설정
     setSeconds(60);
     setStartTimer(true);
+    // 내가 이미 배치한 내용
     if (own === login.loginInfo.id) {
-      printTurnMessage("상대 턴!");
-      setIsMyTurn(false);
-    } // 내가 이미 배치한 내용
+      // 게임 승패 체크
+      if (gameState !== 0) {
+        if (gameState === 1) {
+          if (own === login.loginInfo.id) {
+            printTurnMessage("영토 승리!");
+          } else {
+            printTurnMessage("영토 패배..");
+          }
+        } else if (gameState === 2) {
+          if (own === login.loginInfo.id) {
+            printTurnMessage("상대 성을 격파하였습니다!\n 승리!");
+          } else {
+            printTurnMessage("아군 성이 파괴되었습니다..\n 패배..");
+          }
+        } else if (gameState === 3) {
+          printTurnMessage("명승부였네요.\n비겼습니다!");
+        }
+
+        // 게임 종료
+        //setIsGameStarted(false);
+        return;
+      } else {
+        printTurnMessage("상대 턴!");
+        setIsMyTurn(false);
+      }
+    }
+    // 상대가 배치한 내용 업데이트
     else {
-      // 상대가 배치한 내용
       if (x === -1 || y === -1) {
         // 상대가 아무 것도 배치하지 않았다면
-        await printTurnMessage("상대가 패스하였습니다!\n내 턴!");
+        printTurnMessage("상대가 패스하였습니다!");
       } else {
         const newBoardData = boardData.current.map((row) => [...row]);
         newBoardData[y][x] = oppCastleColor.current!;
         boardData.current = newBoardData;
         setTempBoardData(newBoardData);
-
-        await printTurnMessage("내 턴!");
       }
 
+      // 게임 승패 체크
+      if (gameState !== 0) {
+        if (gameState === 1) {
+          if (own === login.loginInfo.id) {
+            printTurnMessage("영토 승리!");
+          } else {
+            printTurnMessage("영토 패배..");
+          }
+        } else if (gameState === 2) {
+          if (own === login.loginInfo.id) {
+            printTurnMessage("상대 성을 격파하였습니다!\n 승리!");
+          } else {
+            printTurnMessage("아군 성이 파괴되었습니다..\n 패배..");
+          }
+        } else if (gameState === 3) {
+          printTurnMessage("명승부였네요.\n비겼습니다!");
+        }
+
+        // 게임 종료
+        //setIsGameStarted(false);
+        return;
+      } else {
+        printTurnMessage("내 턴!");
+      }
       // 보드 업데이트 후 내 차례
       setIsMyTurn(true);
     }
@@ -229,34 +255,37 @@ function GamePage() {
   }, [login, navigate]);
 
   // 화면에 턴 메세지 출력하는 함수
-  // const printTurnMessage = (message: string) => {
+  const printTurnMessage = (message: string) => {
+    console.log(isGameStarted);
+    setTurnMessage(message);
+    setShowTurnMessage(true);
+    setTimeout(() => {
+      setFade(false); // 사라지는 애니메이션(1초)
+      setTimeout(() => {
+        // 애니메이션 종료 후 진짜 없애기
+        setShowTurnMessage(false);
+        setFade(true);
+      }, 1000);
+    }, 1000);
+  };
+  // const printTurnMessage = async (message: string): Promise<void> => {
+  //   console.log(isGameStarted);
+
+  //   return new Promise((resolve) => {
   //     setTurnMessage(message);
   //     setShowTurnMessage(true);
-  //     setTimeout(() => {
-  //         setFade(false); // 사라지는 애니메이션(1초)
-  //         setTimeout(() => {
-  //             // 애니메이션 종료 후 진짜 없애기
-  //             setShowTurnMessage(false);
-  //             setFade(true);
-  //         }, 1000);
-  //     }, 1000);
-  // };
-  const printTurnMessage = async (message: string): Promise<void> => {
-    return new Promise((resolve) => {
-      setTurnMessage(message);
-      setShowTurnMessage(true);
 
-      setTimeout(() => {
-        setFade(false); // 사라지는 애니메이션(1초)
-        setTimeout(() => {
-          // 애니메이션 종료 후 진짜 없애기
-          setShowTurnMessage(false);
-          setFade(true);
-          resolve(); // Promise를 완료하여 비동기 동작이 완료되었음을 알립니다.
-        }, 1000);
-      }, 1000);
-    });
-  };
+  //     setTimeout(() => {
+  //       setFade(false); // 사라지는 애니메이션(1초)
+  //       setTimeout(() => {
+  //         // 애니메이션 종료 후 진짜 없애기
+  //         setShowTurnMessage(false);
+  //         setFade(true);
+  //         resolve(); // Promise를 완료하여 비동기 동작이 완료되었음을 알립니다.
+  //       }, 1000);
+  //     }, 1000);
+  //   });
+  // };
 
   const passThisTurn = () => {
     if (!isMyTurn) return;
@@ -277,7 +306,7 @@ function GamePage() {
   useEffect(() => {
     let timerInterval: NodeJS.Timeout;
 
-    if (startTimer && seconds > 0) {
+    if (isGameStarted && startTimer && seconds > 0) {
       timerInterval = setInterval(() => {
         setSeconds((prevSeconds) => prevSeconds - 1);
       }, 1000);
@@ -295,7 +324,7 @@ function GamePage() {
     return () => {
       clearInterval(timerInterval);
     };
-  }, [startTimer, seconds]);
+  }, [startTimer, seconds, isGameStarted]);
   return (
     <div className="bg-myWhite h-screen w-screen flex justify-center items-center">
       {showTurnMessage && (
