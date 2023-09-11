@@ -153,6 +153,8 @@ function GamePage() {
         }
 
         // 게임 종료
+        stomp.unsubscribe();
+        stomp.disconnect();
         //setIsGameStarted(false);
         return;
       } else {
