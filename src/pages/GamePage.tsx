@@ -134,11 +134,20 @@ function GamePage() {
       checkBoardData.current[y][x + 1].visited === false
     ) {
       const result = checkTerritory(x + 1, y, startOwn);
-      if (!result) return false;
+      if (!result) {
+        checkBoardData.current[y][x].visited = false;
+        return false;
+      }
     } else {
       if (x + 1 === 9) meetWall.current.Right = true;
       else if (checkBoardData.current[y][x + 1].own !== startOwn) {
-        if (checkBoardData.current[y][x + 1].own !== "Center") return false;
+        if (
+          checkBoardData.current[y][x + 1].own !== "Center" &&
+          checkBoardData.current[y][x + 1].own !== ""
+        ) {
+          checkBoardData.current[y][x].visited = false;
+          return false;
+        }
       }
     }
     // 아래
@@ -148,11 +157,20 @@ function GamePage() {
       checkBoardData.current[y + 1][x].visited === false
     ) {
       const result = checkTerritory(x, y + 1, startOwn);
-      if (!result) return false;
+      if (!result) {
+        checkBoardData.current[y][x].visited = false;
+        return false;
+      }
     } else {
       if (y + 1 === 9) meetWall.current.Bottom = true;
       else if (checkBoardData.current[y + 1][x].own !== startOwn) {
-        if (checkBoardData.current[y + 1][x].own !== "Center") return false;
+        if (
+          checkBoardData.current[y + 1][x].own !== "Center" &&
+          checkBoardData.current[y + 1][x].own !== ""
+        ) {
+          checkBoardData.current[y][x].visited = false;
+          return false;
+        }
       }
     }
     // 위
@@ -162,11 +180,20 @@ function GamePage() {
       checkBoardData.current[y - 1][x].visited === false
     ) {
       const result = checkTerritory(x, y - 1, startOwn);
-      if (!result) return false;
+      if (!result) {
+        checkBoardData.current[y][x].visited = false;
+        return false;
+      }
     } else {
       if (y - 1 === -1) meetWall.current.Top = true;
       else if (checkBoardData.current[y - 1][x].own !== startOwn) {
-        if (checkBoardData.current[y - 1][x].own !== "Center") return false;
+        if (
+          checkBoardData.current[y - 1][x].own !== "Center" &&
+          checkBoardData.current[y - 1][x].own !== ""
+        ) {
+          checkBoardData.current[y][x].visited = false;
+          return false;
+        }
       }
     }
     // 왼
@@ -176,13 +203,24 @@ function GamePage() {
       checkBoardData.current[y][x - 1].visited === false
     ) {
       const result = checkTerritory(x - 1, y, startOwn);
-      if (!result) return false;
+      if (!result) {
+        checkBoardData.current[y][x].visited = false;
+        return false;
+      }
     } else {
       if (x - 1 === -1) meetWall.current.Left = true;
       else if (checkBoardData.current[y][x - 1].own !== startOwn) {
-        if (checkBoardData.current[y][x - 1].own !== "Center") return false;
+        if (
+          checkBoardData.current[y][x - 1].own !== "Center" &&
+          checkBoardData.current[y][x - 1].own !== ""
+        ) {
+          checkBoardData.current[y][x].visited = false;
+          return false;
+        }
       }
     }
+
+    console.log("checkterritory: " + true);
 
     return true;
   };
