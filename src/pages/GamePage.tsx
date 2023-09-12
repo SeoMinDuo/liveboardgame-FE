@@ -10,6 +10,33 @@ type Pos = {
   x: number;
   y: number;
 };
+type CastleColor = "Green" | "Red" | "Center" | "";
+type BoardCellDataType = {
+  own: CastleColor;
+  visited: boolean;
+  blocked: boolean;
+};
+function deepCopy<T>(obj: T): T {
+  if (obj === null || typeof obj !== "object") {
+    return obj;
+  }
+
+  if (Array.isArray(obj)) {
+    const copyArray = [];
+    for (const item of obj) {
+      copyArray.push(deepCopy(item));
+    }
+    return copyArray as any as T;
+  }
+
+  const copyObj = {} as T;
+  for (const key in obj) {
+    if (obj.hasOwnProperty(key)) {
+      copyObj[key] = deepCopy(obj[key]);
+    }
+  }
+  return copyObj;
+}
 const stomp = new StompService();
 function GamePage() {
   const [isMatchingState, setIsMatchingState] = useState(true);
@@ -21,7 +48,6 @@ function GamePage() {
   const [showTurnMessage, setShowTurnMessage] = useState(false);
   const [fade, setFade] = useState(true);
 
-  type CastleColor = "Green" | "Red";
   let myCastleColor = useRef<CastleColor>();
   let oppCastleColor = useRef<CastleColor>();
   let roomId = useRef("-1");
@@ -31,15 +57,19 @@ function GamePage() {
 
   // GameBoard
   // const initialBoardData: string[][] = Array.from({ length: 9 }, () => Array.from({ length: 9 }, () => ""));
-  const initialBoardData: string[][] = Array.from({ length: 9 }, (_, row) =>
-    Array.from({ length: 9 }, (_, col) =>
-      row === 4 && col === 4 ? "center" : ""
-    )
+  const initialBoardData: BoardCellDataType[][] = Array.from(
+    { length: 9 },
+    (_, row) =>
+      Array.from({ length: 9 }, (_, col) =>
+        row === 4 && col === 4
+          ? { own: "Center", visited: false, blocked: false }
+          : { own: "", visited: false, blocked: false }
+      )
   );
 
-  const boardData = useRef<string[][]>([...initialBoardData]);
+  const boardData = useRef<BoardCellDataType[][]>([...initialBoardData]);
 
-  const [tempBoardData, setTempBoardData] = useState<string[][]>([
+  const [tempBoardData, setTempBoardData] = useState<BoardCellDataType[][]>([
     ...initialBoardData,
   ]);
 
@@ -51,9 +81,9 @@ function GamePage() {
 
     if (isMyTurn === false) return;
 
-    const newBoardData = boardData.current.map((row) => [...row]);
-    if (newBoardData[y][x] === "") {
-      newBoardData[y][x] = myCastleColor.current!; // 예시로 X 말 추가
+    const newBoardData = deepCopy(boardData.current.map((row) => [...row]));
+    if (newBoardData[y][x].own === "") {
+      newBoardData[y][x].own = myCastleColor.current!; // 빈 곳이면 말 추가
       pos.current = { x, y };
     } else {
       pos.current = { x: -1, y: -1 };
@@ -129,7 +159,7 @@ function GamePage() {
         printTurnMessage("상대가 패스하였습니다!");
       } else {
         const newBoardData = boardData.current.map((row) => [...row]);
-        newBoardData[y][x] = oppCastleColor.current!;
+        newBoardData[y][x].own = oppCastleColor.current!;
         boardData.current = newBoardData;
         setTempBoardData(newBoardData);
       }
@@ -270,24 +300,6 @@ function GamePage() {
       }, 1000);
     }, 1000);
   };
-  // const printTurnMessage = async (message: string): Promise<void> => {
-  //   console.log(isGameStarted);
-
-  //   return new Promise((resolve) => {
-  //     setTurnMessage(message);
-  //     setShowTurnMessage(true);
-
-  //     setTimeout(() => {
-  //       setFade(false); // 사라지는 애니메이션(1초)
-  //       setTimeout(() => {
-  //         // 애니메이션 종료 후 진짜 없애기
-  //         setShowTurnMessage(false);
-  //         setFade(true);
-  //         resolve(); // Promise를 완료하여 비동기 동작이 완료되었음을 알립니다.
-  //       }, 1000);
-  //     }, 1000);
-  //   });
-  // };
 
   const passThisTurn = () => {
     if (!isMyTurn) return;

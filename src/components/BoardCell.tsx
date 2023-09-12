@@ -16,7 +16,7 @@ const BoardCell: React.FC<BoardCellProps> = ({ player, onClick }) => {
     >
       {player === "Green" && <img src={greenCastle} alt="my castle" />}
       {player === "Red" && <img src={redCastle} alt="enemy castle" />}
-      {player === "center" && <img src={centerCastle} alt="enemy castle" />}
+      {player === "Center" && <img src={centerCastle} alt="enemy castle" />}
     </div>
   );
 };
