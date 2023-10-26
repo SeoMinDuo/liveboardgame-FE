@@ -51,6 +51,7 @@ function GamePage() {
   let oppCastleColor = useRef<CastleColor>();
   let roomId = useRef("-1");
   let stopFinding = useRef(false);
+  const clickedCell = useRef<Pos>({ x: -1, y: -1 });
   const login = useLoginContext();
   const navigate = useNavigate();
 
@@ -98,8 +99,13 @@ function GamePage() {
     } else {
       pos.current = { x: -1, y: -1 };
     }
-
     setTempBoardData(newBoardData);
+    //더블 클릭?
+    if (clickedCell.current.x === x && clickedCell.current.y === y) {
+      sendNewPosition();
+    } else {
+      clickedCell.current = { x, y };
+    }
   };
 
   const resetVisited = (boardData: BoardCellDataType[][]) => {
