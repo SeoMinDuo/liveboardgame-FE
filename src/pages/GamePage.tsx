@@ -5,24 +5,8 @@ import LoadingCircle from "../components/LoadingCircle";
 import GameBoard from "../components/GameBoard";
 import StompService from "../stomp";
 import axios from "axios";
+import { BoardCellDataType, CastleColor, Pos, WallState } from "../type/types";
 
-type Pos = {
-  x: number;
-  y: number;
-};
-type CastleColor = "Green" | "Red" | "Center" | "";
-type BoardCellDataType = {
-  own: CastleColor;
-  visited: boolean;
-  blocked: boolean;
-};
-type WallState = {
-  Top: boolean;
-  Bottom: boolean;
-  Left: boolean;
-  Right: boolean;
-  [key: string]: boolean; // 인덱스 시그니처 추가
-};
 function deepCopy<T>(obj: T): T {
   if (obj === null || typeof obj !== "object") {
     return obj;
@@ -77,20 +61,22 @@ function GamePage() {
     (_, row) =>
       Array.from({ length: 9 }, (_, col) =>
         row === 4 && col === 4
-          ? { own: "Center", visited: false, blocked: false }
-          : { own: "", visited: false, blocked: false }
+          ? { own: "Center", visited: false, blocked: false, territory: "" }
+          : { own: "", visited: false, blocked: false, territory: "" }
       )
   );
 
-  const boardData = useRef<BoardCellDataType[][]>([...initialBoardData]);
+  const boardData = useRef<BoardCellDataType[][]>(deepCopy(initialBoardData));
 
-  const [tempBoardData, setTempBoardData] = useState<BoardCellDataType[][]>([
-    ...initialBoardData,
-  ]);
+  const [tempBoardData, setTempBoardData] = useState<BoardCellDataType[][]>(
+    deepCopy(initialBoardData)
+  );
 
   const pos = useRef<Pos>({ x: -1, y: -1 });
 
-  const checkBoardData = useRef<BoardCellDataType[][]>([...initialBoardData]);
+  const checkBoardData = useRef<BoardCellDataType[][]>(
+    deepCopy(initialBoardData)
+  );
   const visitedCells = useRef<{ x: number; y: number }[]>([]);
   let meetWall = useRef<WallState>({
     Top: false,
@@ -99,24 +85,30 @@ function GamePage() {
     Right: false,
   });
   const handleCellClick = (x: number, y: number) => {
-    console.log("handleCellClick");
-    console.log(checkBoardData.current);
-
     if (isMyTurn === false) return;
     if (checkBoardData.current[y][x].blocked) {
       alert("이미 영토 내부 입니다");
       return;
     }
     const newBoardData = deepCopy(boardData.current.map((row) => [...row]));
+    // const newBoardData = deepCopy(checkBoardData.current);
     if (newBoardData[y][x].own === "") {
       newBoardData[y][x].own = myCastleColor.current!; // 빈 곳이면 말 추가
       pos.current = { x, y };
     } else {
       pos.current = { x: -1, y: -1 };
     }
+
     setTempBoardData(newBoardData);
   };
 
+  const resetVisited = (boardData: BoardCellDataType[][]) => {
+    for (let i = 0; i < boardData.length; i++) {
+      for (let j = 0; j < boardData[i].length; j++) {
+        boardData[i][j].visited = false;
+      }
+    }
+  };
   const checkTerritory = (
     x: number,
     y: number,
@@ -247,6 +239,125 @@ function GamePage() {
     setStartTimer(false);
   };
 
+  const setCheckBoardData = () => {
+    visitedCells.current = [];
+    // 영토 체크
+    checkBoardData.current = deepCopy(boardData.current);
+    for (let i = 0; i < 9; i++) {
+      // y좌표
+      for (let j = 0; j < 9; j++) {
+        // x좌표
+        if (
+          // 성 찾았다면
+          checkBoardData.current[i][j].own === "Green" ||
+          checkBoardData.current[i][j].own === "Red"
+        ) {
+          // 4방향 테두리 체크 후 접근
+          // 오른쪽
+
+          // 테스트값 초기화
+          meetWall.current = {
+            Top: false,
+            Left: false,
+            Right: false,
+            Bottom: false,
+          };
+          visitedCells.current = [];
+          if (
+            j + 1 < 9 &&
+            checkBoardData.current[i][j + 1].own === "" &&
+            checkBoardData.current[i][j + 1].visited === false
+          )
+            if (
+              checkTerritory(j + 1, i, checkBoardData.current[i][j].own) &&
+              areAllTrue(meetWall.current)
+            ) {
+              for (let k = 0; k < visitedCells.current.length; k++) {
+                const el = visitedCells.current[k];
+                checkBoardData.current[el.y][el.x].blocked = true;
+                boardData.current[el.y][el.x].territory =
+                  checkBoardData.current[i][j].own;
+              }
+            }
+          // 아래
+          // 테스트값 초기화
+          meetWall.current = {
+            Top: false,
+            Left: false,
+            Right: false,
+            Bottom: false,
+          };
+          visitedCells.current = [];
+          if (
+            i + 1 < 9 &&
+            checkBoardData.current[i + 1][j].own === "" &&
+            checkBoardData.current[i + 1][j].visited === false
+          )
+            if (
+              checkTerritory(j, i + 1, checkBoardData.current[i][j].own) &&
+              areAllTrue(meetWall.current)
+            ) {
+              for (let k = 0; k < visitedCells.current.length; k++) {
+                const el = visitedCells.current[k];
+                checkBoardData.current[el.y][el.x].blocked = true;
+                boardData.current[el.y][el.x].territory =
+                  checkBoardData.current[i][j].own;
+              }
+            }
+          // 위
+          // 테스트값 초기화
+          meetWall.current = {
+            Top: false,
+            Left: false,
+            Right: false,
+            Bottom: false,
+          };
+          visitedCells.current = [];
+          if (
+            i - 1 > -1 &&
+            checkBoardData.current[i - 1][j].own === "" &&
+            checkBoardData.current[i - 1][j].visited === false
+          )
+            if (
+              checkTerritory(j, i - 1, checkBoardData.current[i][j].own) &&
+              areAllTrue(meetWall.current)
+            ) {
+              for (let k = 0; k < visitedCells.current.length; k++) {
+                const el = visitedCells.current[k];
+                checkBoardData.current[el.y][el.x].blocked = true;
+                checkBoardData.current[el.y][el.x].territory =
+                  checkBoardData.current[i][j].own;
+              }
+            }
+          // 왼
+          // 테스트값 초기화
+          meetWall.current = {
+            Top: false,
+            Left: false,
+            Right: false,
+            Bottom: false,
+          };
+          visitedCells.current = [];
+          if (
+            j - 1 > -1 &&
+            checkBoardData.current[i][j - 1].own === "" &&
+            checkBoardData.current[i][j - 1].visited === false
+          )
+            if (
+              checkTerritory(j - 1, i, checkBoardData.current[i][j].own) &&
+              areAllTrue(meetWall.current)
+            ) {
+              for (let k = 0; k < visitedCells.current.length; k++) {
+                const el = visitedCells.current[i];
+                checkBoardData.current[el.y][el.x].blocked = true;
+                boardData.current[el.y][el.x].territory =
+                  checkBoardData.current[i][j].own;
+              }
+            }
+        }
+      }
+    }
+  };
   const updateBoard = async (
     x: number,
     y: number,
@@ -260,6 +371,8 @@ function GamePage() {
     setStartTimer(true);
     // 내가 이미 배치한 내용
     if (own === login.loginInfo.id) {
+      setCheckBoardData();
+      setTempBoardData(boardData.current);
       // 게임 승패 체크
       if (gameState !== 0) {
         if (gameState === 1) {
@@ -292,122 +405,17 @@ function GamePage() {
         // 상대가 아무 것도 배치하지 않았다면
         printTurnMessage("상대가 패스하였습니다!");
       } else {
-        const newBoardData = boardData.current.map((row) => [...row]);
-        newBoardData[y][x].own = oppCastleColor.current!;
-        boardData.current = newBoardData;
-        setTempBoardData(newBoardData);
-        ///
-        visitedCells.current = [];
-        // 영토 체크
-        checkBoardData.current = deepCopy(boardData.current);
-        for (let i = 0; i < 9; i++) {
-          // y좌표
-          for (let j = 0; j < 9; j++) {
-            // x좌표
-            if (
-              // 성 찾았다면
-              checkBoardData.current[i][j].own === "Green" ||
-              checkBoardData.current[i][j].own === "Red"
-            ) {
-              // 4방향 테두리 체크 후 접근
-              // 오른쪽
+        // const newBoardData = boardData.current.map((row) => [...row]);
+        // newBoardData[y][x].own = oppCastleColor.current!;
+        // boardData.current = deepCopy(newBoardData);
 
-              // 테스트값 초기화
-              meetWall.current = {
-                Top: false,
-                Left: false,
-                Right: false,
-                Bottom: false,
-              };
-              visitedCells.current = [];
-              if (
-                j + 1 < 9 &&
-                checkBoardData.current[i][j + 1].own === "" &&
-                checkBoardData.current[i][j + 1].visited === false
-              )
-                if (
-                  checkTerritory(j + 1, i, checkBoardData.current[i][j].own) &&
-                  areAllTrue(meetWall.current)
-                ) {
-                  for (let i = 0; i < visitedCells.current.length; i++) {
-                    const el = visitedCells.current[i];
-                    checkBoardData.current[el.y][el.x].blocked = true;
-                  }
-                }
-              // 아래
-              // 테스트값 초기화
-              meetWall.current = {
-                Top: false,
-                Left: false,
-                Right: false,
-                Bottom: false,
-              };
-              visitedCells.current = [];
-              if (
-                i + 1 < 9 &&
-                checkBoardData.current[i + 1][j].own === "" &&
-                checkBoardData.current[i + 1][j].visited === false
-              )
-                if (
-                  checkTerritory(j, i + 1, checkBoardData.current[i][j].own) &&
-                  areAllTrue(meetWall.current)
-                ) {
-                  for (let i = 0; i < visitedCells.current.length; i++) {
-                    const el = visitedCells.current[i];
-                    checkBoardData.current[el.y][el.x].blocked = true;
-                  }
-                }
-              // 위
-              // 테스트값 초기화
-              meetWall.current = {
-                Top: false,
-                Left: false,
-                Right: false,
-                Bottom: false,
-              };
-              visitedCells.current = [];
-              if (
-                i - 1 > -1 &&
-                checkBoardData.current[i - 1][j].own === "" &&
-                checkBoardData.current[i - 1][j].visited === false
-              )
-                if (
-                  checkTerritory(j, i - 1, checkBoardData.current[i][j].own) &&
-                  areAllTrue(meetWall.current)
-                ) {
-                  for (let i = 0; i < visitedCells.current.length; i++) {
-                    const el = visitedCells.current[i];
-                    checkBoardData.current[el.y][el.x].blocked = true;
-                  }
-                }
-              // 왼
-              // 테스트값 초기화
-              meetWall.current = {
-                Top: false,
-                Left: false,
-                Right: false,
-                Bottom: false,
-              };
-              visitedCells.current = [];
-              if (
-                j - 1 > -1 &&
-                checkBoardData.current[i][j - 1].own === "" &&
-                checkBoardData.current[i][j - 1].visited === false
-              )
-                if (
-                  checkTerritory(j - 1, i, checkBoardData.current[i][j].own) &&
-                  areAllTrue(meetWall.current)
-                ) {
-                  for (let i = 0; i < visitedCells.current.length; i++) {
-                    const el = visitedCells.current[i];
-                    checkBoardData.current[el.y][el.x].blocked = true;
-                  }
-                }
-            }
-          }
-        }
-
+        boardData.current[y][x].own = oppCastleColor.current!;
         ///
+        setCheckBoardData();
+        ///
+
+        setTempBoardData(boardData.current);
+        // boardData.current = deepCopy(checkBoardData.current);
       }
 
       // 게임 승패 체크
