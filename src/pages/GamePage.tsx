@@ -55,6 +55,11 @@ function GamePage() {
   const login = useLoginContext();
   const navigate = useNavigate();
 
+  const goHome = async () => {
+    setTimeout(() => {
+      navigate("/");
+    }, 2000); // 1000 밀리초 (1초) 뒤에 navigate 실행
+  };
   // GameBoard
   // const initialBoardData: string[][] = Array.from({ length: 9 }, () => Array.from({ length: 9 }, () => ""));
   const initialBoardData: BoardCellDataType[][] = Array.from(
@@ -108,13 +113,6 @@ function GamePage() {
     }
   };
 
-  const resetVisited = (boardData: BoardCellDataType[][]) => {
-    for (let i = 0; i < boardData.length; i++) {
-      for (let j = 0; j < boardData[i].length; j++) {
-        boardData[i][j].visited = false;
-      }
-    }
-  };
   const checkTerritory = (
     x: number,
     y: number,
@@ -398,7 +396,9 @@ function GamePage() {
         }
 
         // 게임 종료
-        //setIsGameStarted(false);
+        stomp.unsubscribe();
+        stomp.disconnect();
+        goHome();
         return;
       } else {
         printTurnMessage("상대 턴!");
@@ -426,6 +426,7 @@ function GamePage() {
 
       // 게임 승패 체크
       if (gameState !== 0) {
+        setStartTimer(false);
         if (gameState === 1) {
           if (own === login.loginInfo.id) {
             printTurnMessage("영토 승리!");
@@ -445,7 +446,7 @@ function GamePage() {
         // 게임 종료
         stomp.unsubscribe();
         stomp.disconnect();
-        //setIsGameStarted(false);
+        goHome();
         return;
       } else {
         printTurnMessage("내 턴!");
