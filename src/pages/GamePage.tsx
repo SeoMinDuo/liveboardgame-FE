@@ -216,8 +216,6 @@ function GamePage() {
       }
     }
 
-    console.log("checkterritory: " + true);
-
     return true;
   };
 
@@ -352,7 +350,7 @@ function GamePage() {
               areAllTrue(meetWall.current)
             ) {
               for (let k = 0; k < visitedCells.current.length; k++) {
-                const el = visitedCells.current[i];
+                const el = visitedCells.current[k];
                 checkBoardData.current[el.y][el.x].blocked = true;
                 boardData.current[el.y][el.x].territory =
                   checkBoardData.current[i][j].own;
