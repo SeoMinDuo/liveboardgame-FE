@@ -235,10 +235,30 @@ function GamePage() {
       y: pos.current?.y,
       name: login.loginInfo.id,
     });
+    if (checkBoardIsFull()) {
+      stomp.send("/app/gameboard/" + roomId.current, {
+        x: -2,
+        y: -2,
+        name: login.loginInfo.id,
+      });
+    }
 
     // 선택된 위치값 초기화
     pos.current = { x: -1, y: -1 };
     setStartTimer(false);
+  };
+
+  const checkBoardIsFull = () => {
+    for (let i = 0; i < 9; i++) {
+      // y좌표
+      for (let j = 0; j < 9; j++) {
+        if (checkBoardData.current[i][j].blocked === false) {
+          return false;
+        }
+      }
+    }
+
+    return true;
   };
 
   const setCheckBoardData = () => {
@@ -367,7 +387,7 @@ function GamePage() {
     gameState: number
   ) => {
     console.log("updateBoard");
-
+    checkBoardData.current[x][y].blocked = true;
     // 게임시간 설정
     setSeconds(60);
     setStartTimer(true);
