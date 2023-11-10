@@ -235,6 +235,9 @@ function GamePage() {
       y: pos.current?.y,
       name: login.loginInfo.id,
     });
+
+    checkBoardData.current[pos.current?.x][pos.current?.y].blocked = true;
+
     if (checkBoardIsFull()) {
       stomp.send("/app/gameboard/" + roomId.current, {
         x: -2,
@@ -387,7 +390,7 @@ function GamePage() {
     gameState: number
   ) => {
     console.log("updateBoard");
-    checkBoardData.current[x][y].blocked = true;
+
     // 게임시간 설정
     setSeconds(60);
     setStartTimer(true);
