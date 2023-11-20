@@ -229,29 +229,22 @@ function GamePage() {
     console.log("sendNewPosition");
 
     setIsMyTurn(false);
+
+    checkBoardData.current[pos.current?.x][pos.current?.y].blocked = true;
     boardData.current = [...tempBoardData];
     stomp.send("/app/gameboard/" + roomId.current, {
       x: pos.current?.x,
       y: pos.current?.y,
       name: login.loginInfo.id,
+      full: isCheckBoardFull(),
     });
-
-    checkBoardData.current[pos.current?.x][pos.current?.y].blocked = true;
-
-    if (checkBoardIsFull()) {
-      stomp.send("/app/gameboard/" + roomId.current, {
-        x: -2,
-        y: -2,
-        name: login.loginInfo.id,
-      });
-    }
 
     // 선택된 위치값 초기화
     pos.current = { x: -1, y: -1 };
     setStartTimer(false);
   };
 
-  const checkBoardIsFull = () => {
+  const isCheckBoardFull = () => {
     for (let i = 0; i < 9; i++) {
       // y좌표
       for (let j = 0; j < 9; j++) {
@@ -591,6 +584,7 @@ function GamePage() {
       x: -1,
       y: -1,
       name: login.loginInfo.id,
+      full: isCheckBoardFull(),
     });
     setTempBoardData(boardData.current);
     // 선택된 위치값 초기화
